@@ -1,6 +1,9 @@
 import express, { Express, Request, Response } from "express";
-import { rbotCallback } from "./apps"
+// import { slCallback } from "./apps/rbot/slbot";
+// import { slBotCallback } from "./apps"
+import { slCallback as slBotCallback } from "./apps/rbot/slbot";
 
+console.log('process.env.NODE_ENV = ', process.env.NODE_ENV);
 if (process.env.NODE_ENV !== 'production') {
   require('dotenv').config();
 }
@@ -12,7 +15,7 @@ app.get('/healthz', (req: Request, res: Response) => {
 });
 
 // apps
-app.use(rbotCallback);
+app.use(slBotCallback);
 
 app.listen(3000, '0.0.0.0', () => {
   console.log('[server]: Server is running at http://0.0.0.0:3000');

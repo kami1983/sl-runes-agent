@@ -7,10 +7,34 @@ export const createPool = async () => {
   if (knexInstance) return knexInstance
 
   const connector = new Connector();
-  const clientOpts = await connector.getOptions({
-    instanceConnectionName: process.env.DB_INSTANCE_CONNECTION_NAME || "",
-    ipType: IpAddressTypes.PUBLIC,
-  });
+  // const clientOpts = await connector.getOptions({
+  //   instanceConnectionName: process.env.DB_INSTANCE_CONNECTION_NAME || "",
+  //   ipType: IpAddressTypes.PUBLIC,
+  // });
+
+  // const clientOpts = {
+  //   host: process.env.DB_HOST || 'localhost', // 数据库主机名，默认为本地主机
+  //   port: process.env.DB_PORT || 5432,        // 数据库端口，默认为5432
+  //   ssl: {
+  //     rejectUnauthorized: false               // 如果需要使用 SSL 连接，可以添加此选项
+  //   }
+  // };
+
+  const clientOpts = await getClientOpts();
+  async function getClientOpts() {
+    if (process.env.DB_INSTANCE_CONNECTION_NAME) {
+      return await connector.getOptions({
+        instanceConnectionName: process.env.DB_INSTANCE_CONNECTION_NAME || "",
+        ipType: IpAddressTypes.PUBLIC,
+      });
+    }
+    return {
+      host: process.env.DB_HOST || 'localhost', 
+      port: parseInt(process.env.DB_PORT??'5432'),
+      ssl: false,
+    }
+  }
+
 
   const dbConfig = {
     client: 'pg',
@@ -29,9 +53,11 @@ export const createPool = async () => {
       createRetryIntervalMillis: 200,
     }
   }
+
   const knex = Knex(dbConfig)
+
   try {
-    await knex.raw('SELECT now()')
+    await knex.raw('SELECT 1')
     knexInstance = knex
     return knexInstance
   } catch (error) {
@@ -77,6 +103,7 @@ export const getTokens = async (pool: Knex.Knex) => {
 }
 
 export const getTokenBySymbol = async (pool: Knex.Knex, symbol: string) => {
+  console.log('getTokenBySymbol', `--- ${symbol} ---`)
   return await pool
     .select()
     .from('tokens')

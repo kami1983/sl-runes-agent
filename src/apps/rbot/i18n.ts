@@ -5,6 +5,7 @@ import type { TFunction } from 'i18next';
 import en from './locales/en.json'
 import zh from './locales/zh-cn.json'
 
+console.log('RUN ------------ i18n.ts')
 i18next
   .init({
     debug: true,
