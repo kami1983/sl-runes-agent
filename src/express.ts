@@ -17,8 +17,8 @@ app.get('/healthz', (req: Request, res: Response) => {
 // apps
 app.use(slBotCallback);
 
-app.listen(3000, '0.0.0.0', () => {
-  console.log('[server]: Server is running at http://0.0.0.0:3000');
+app.listen(3001, '0.0.0.0', () => {
+  console.log('[server]: Server is running at http://0.0.0.0:3001');
 });
 
 // npx ts-node ./src/express.ts
