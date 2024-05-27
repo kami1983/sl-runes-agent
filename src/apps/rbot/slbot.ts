@@ -57,13 +57,14 @@ export const slCallback = async (req: Request, res: Response, next: NextFunction
   switch (req.path) {
     case '/sl/wallet':
       res.send(await actionSlWallet(uid));
+      break;
     case '/sl/create':
       // 获取post信息， Post 的 create
 
       // const [_, args] = ctx.message.text.split(/ (.+)/, 2);
       // const { uid, username } = extractUser(req);
       res.send(await actionSlCreate(uid));
-
+      break;
     default:
       next();
   }
