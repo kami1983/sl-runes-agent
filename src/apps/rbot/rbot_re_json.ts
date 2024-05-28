@@ -49,7 +49,9 @@ export async function createRedEnvelope(userId: number, args: string, i18n: TFun
   }
 
   // amount 88.88 -> 8888
-  const amount = stringToBigint(matches[1], parseInt(TOKEN_DECIMALS))
+  const raw_amount = matches[1]
+  console.log('raw_amount', raw_amount)
+  const amount = stringToBigint(raw_amount, parseInt(TOKEN_DECIMALS))
   const count = parseInt(matches[2], 10);
   if (isNaN(count) || String(count) !== matches[2]) {
     return [i18n('msg_how_to_create')]
@@ -64,6 +66,8 @@ export async function createRedEnvelope(userId: number, args: string, i18n: TFun
   if (amount / BigInt(count) < token.re_minimum_each) {
     return [i18n('msg_create_minimum', { amount: bigintToString(token.re_minimum_each, parseInt(TOKEN_DECIMALS)) })]
   }
+  
+  console.log('Before transfer', new Date().getTime())
 
   const random = (matches[3] === 'F') ? false : true
   const memo = matches[4] || ''
@@ -87,6 +91,8 @@ export async function createRedEnvelope(userId: number, args: string, i18n: TFun
     return [i18n('msg_create_transfer_failed')] //TODO: `${ret['Err']}`
   }
 
+  console.log('After transfer', new Date().getTime())
+
   const serviceActor = await getAgentActor()
   
   const re: RedEnvelope = {
@@ -98,8 +104,11 @@ export async function createRedEnvelope(userId: number, args: string, i18n: TFun
     memo: memo,
     is_random: random,
     amount: amount,
-    expires_at: [expires_at]
+    expires_at: [] // expires_at: [expires_at]
   }
+
+  console.log('Before create', new Date().getTime())
+
   const ret2 = await serviceActor.create_red_envelope(re)
   if ('Err' in ret2) {
     const code = `reapp_error_${ret2['Err'][0].toString()}`
@@ -123,14 +132,28 @@ export async function createRedEnvelope(userId: number, args: string, i18n: TFun
       is_sent: false,
       is_revoked: false
     }
+
+    console.log('After created', new Date().getTime())
+
     await S.insertReStatus(await createPool(), reStatus)
+
+    console.log('Insert re status', new Date().getTime())
     // select user/group
-    const keyboard = RBOT_SELECT_USER_GROUP_KEYBOARD(Number(rid), count, i18n)
-    return [i18n('msg_create', {
+    // const keyboard = RBOT_SELECT_USER_GROUP_KEYBOARD(Number(rid), count, i18n)
+    const res_obj = {
       id: rid.toString(),
       fee: bigintToString(fee_amount, parseInt(TOKEN_DECIMALS)),
       icrc1_fee: bigintToString(transFee * 2n, parseInt(TOKEN_DECIMALS)),
-    }), keyboard]
+    }
+    console.log('End', new Date().getTime())
+    console.log('res_obj', res_obj)
+    return [i18n('msg_create', res_obj), {
+      rid: res_obj.id,
+      fee: res_obj.fee,
+      count: count,
+      amount: raw_amount,
+      icrc1_fee: res_obj.icrc1_fee,
+    }]
   }
 }
 
@@ -171,7 +194,7 @@ export async function sendRedEnvelope(userId: number, args: string[], i18n: TFun
   }
 }
 
-export async function grabRedEnvelope(userId: number, username: string, args: string[], i18n: TFunction): Promise<[string, string]> {
+export async function grabRedEnvelope(userId: number, username: string, args: string[], i18n: TFunction): Promise<[string, string, object?]> {
   const rid = Number(args[0]);
   const pool = await createPool()
 
@@ -203,7 +226,10 @@ export async function grabRedEnvelope(userId: number, username: string, args: st
     if (await S.getWallet(pool, userId) == undefined) {
       msg += '\n' + i18n('msg_snatch_suffix', { botname: RBOT_BOT_USERNAME })
     }
-    return ['reapp_error_0', msg]
+    return ['reapp_error_0', msg, {
+      rid: rid,
+      amount: amount,
+    }]
   }
 }
 

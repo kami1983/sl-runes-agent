@@ -3,7 +3,15 @@ import { mnemonicToSeedSync } from 'bip39';
 import { Principal } from '@dfinity/principal';
 import { DelegationChain, DelegationIdentity } from "@dfinity/identity";
 import { Secp256k1KeyIdentity } from "@dfinity/identity-secp256k1";
+import { createHash } from 'crypto';
 
+
+export function uuidToNumber(uuid: string, length: number = 8, modulus: number = Math.pow(2, 32)): number {
+  const hash = createHash('md5').update(uuid).digest('hex');
+  let number = parseInt(hash.slice(0, length), 16);
+  number = number % modulus;
+  return number;
+}
 
 function deriveKey(id: number, path?: string): hdkey {
   const seed = mnemonicToSeedSync(process.env.SOCIALFI_AGENT_MNEMONIC!)

@@ -14,6 +14,9 @@ app.get('/healthz', (req: Request, res: Response) => {
   res.send('OK');
 });
 
+var bodyParser = require('body-parser');
+app.use(bodyParser());
+
 // apps
 app.use(slBotCallback);
 

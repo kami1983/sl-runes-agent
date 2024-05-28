@@ -11,8 +11,8 @@ import i18next, { I18nContext, getLanguage, setLanguage } from "./i18n"
 import express, { Request, Response, NextFunction } from 'express';
 
 import { ResultWalletInfos, showWallet } from './rbot_wallet_json';
-import { createRedEnvelope, isAgentAcc } from "./rbot_re_json";
-import { getAgentIdentity, getUserIdentity, delegateIdentity } from '../../identity'
+import { createRedEnvelope, grabRedEnvelope, isAgentAcc } from "./rbot_re_json";
+import { getAgentIdentity, getUserIdentity, delegateIdentity, uuidToNumber } from '../../identity'
 
 import Knex from 'knex';
 
@@ -44,8 +44,16 @@ export const slCallback = async (req: Request, res: Response, next: NextFunction
   console.log(req.path)
 
   if(!checkToken(req)) {
-    res.status(401).send('Unauthorized');
+    res.status(401).send('Unauthorized user');
     return;
+  }
+
+  const _checkAgent = () => {
+    if(!checkIsAgent()){
+      res.status(401).send('Unauthorized agent');
+      return false;
+    }
+    return true
   }
 
   const { uid, username } = extractUser(req);
@@ -54,16 +62,24 @@ export const slCallback = async (req: Request, res: Response, next: NextFunction
     username,
   })
 
+  console.log('uid:', uid, 'username:', username)
+
   switch (req.path) {
     case '/sl/wallet':
       res.send(await actionSlWallet(uid));
       break;
     case '/sl/create':
-      // 获取post信息， Post 的 create
-
-      // const [_, args] = ctx.message.text.split(/ (.+)/, 2);
-      // const { uid, username } = extractUser(req);
-      res.send(await actionSlCreate(uid));
+      if(_checkAgent()){
+        const args = req.body.args;
+        console.log('cmd:', args)
+        res.send(await actionSlCreate(uid, args));
+      }
+      break;
+    case '/sl/grab':
+      if(_checkAgent()){
+        const rid = req.body.rid;
+        res.send(await actionSlGrab(uid, username, rid));
+      }
       break;
     default:
       next();
@@ -75,38 +91,35 @@ async function actionSlWallet(uid: number): Promise<ResultWalletInfos> {
   return await showWallet(uid, getI18n())
 }
 
-async function actionSlCreate(uid: number){
-  
-  if(!await checkIsAgent()){
-    return "You are not an agent"
-  }else{
-    return "You are an agent"
-  }
-  // return "TRY "
-  // return await createRedEnvelope(uid, args, getI18n())
+async function actionSlCreate(uid: number, args: string){
+  return await createRedEnvelope(uid, args, getI18n())
+}
+
+async function actionSlGrab(uid: number, username: string, rid: string){
+  return await grabRedEnvelope(uid, username, [rid], getI18n())
 }
 
 async function checkIsAgent(): Promise<boolean> {
   const agentIdentity = getAgentIdentity().getPrincipal()
-  console.log('checkIsAgent:', agentIdentity.toText())
+  // console.log('checkIsAgent:', agentIdentity.toText())
   const is_agent = await isAgentAcc(agentIdentity)
   return is_agent
 }
 
 
 function checkToken(req: Request): boolean {
-  const uid = parseInt(req.query.uid?.toString()??'0') ;
+  const uid = req.query.uid?.toString()??'' ;
   const username = req.query.username?.toString()??'';
   const token = req.query.token;
   const timestamp = req.query.timestamp;
-  if (uid === 0 || username === '' || token === undefined || timestamp === undefined) {
+  if (uid ==='' || username === '' || token === undefined || timestamp === undefined) {
     return false;
   }
   return true
 }
 
 function extractUser(req: Request): { uid: number, username: string } {
-  const uid = parseInt(req.query.uid?.toString()??'0') ;
+  const uid = uuidToNumber(req.query.uid?.toString()??'0');
   const username = req.query.username?.toString()??'';
   return { uid, username }
 }
