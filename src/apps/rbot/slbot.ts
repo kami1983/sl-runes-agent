@@ -11,7 +11,7 @@ import i18next, { I18nContext, getLanguage, setLanguage } from "./i18n"
 import express, { Request, Response, NextFunction } from 'express';
 
 import { ResultWalletInfos, showWallet } from './rbot_wallet_json';
-import { createRedEnvelope, grabRedEnvelope, isAgentAcc } from "./rbot_re_json";
+import { createRedEnvelope, getRedEnvelope, grabRedEnvelope, isAgentAcc, listRedEnvelope } from "./rbot_re_json";
 import { getAgentIdentity, getUserIdentity, delegateIdentity, uuidToNumber } from '../../identity'
 
 import Knex from 'knex';
@@ -70,9 +70,7 @@ export const slCallback = async (req: Request, res: Response, next: NextFunction
       break;
     case '/sl/create':
       if(_checkAgent()){
-        const args = req.body.args;
-        console.log('cmd:', args)
-        res.send(await actionSlCreate(uid, args));
+        res.send(await actionSlCreate(uid, req.body.args));
       }
       break;
     case '/sl/grab':
@@ -81,6 +79,12 @@ export const slCallback = async (req: Request, res: Response, next: NextFunction
         res.send(await actionSlGrab(uid, username, rid));
       }
       break;
+    case '/sl/list':
+      res.send(await actionSlList(uid, req.body.args));
+      break;
+    case '/sl/get':
+        res.send(await actionSlGetRe(req.body.args));
+        break;
     default:
       next();
   }
@@ -97,6 +101,16 @@ async function actionSlCreate(uid: number, args: string){
 
 async function actionSlGrab(uid: number, username: string, rid: string){
   return await grabRedEnvelope(uid, username, [rid], getI18n())
+}
+
+async function actionSlList(uid: number, args: string){
+  return await listRedEnvelope(uid, [args], getI18n())
+}
+
+async function actionSlGetRe(args: string){
+  const res = await getRedEnvelope( [args], getI18n())
+  console.log('res:', res)
+  return res
 }
 
 async function checkIsAgent(): Promise<boolean> {

@@ -50,7 +50,6 @@ export async function createRedEnvelope(userId: number, args: string, i18n: TFun
 
   // amount 88.88 -> 8888
   const raw_amount = matches[1]
-  console.log('raw_amount', raw_amount)
   const amount = stringToBigint(raw_amount, parseInt(TOKEN_DECIMALS))
   const count = parseInt(matches[2], 10);
   if (isNaN(count) || String(count) !== matches[2]) {
@@ -66,8 +65,6 @@ export async function createRedEnvelope(userId: number, args: string, i18n: TFun
   if (amount / BigInt(count) < token.re_minimum_each) {
     return [i18n('msg_create_minimum', { amount: bigintToString(token.re_minimum_each, parseInt(TOKEN_DECIMALS)) })]
   }
-  
-  console.log('Before transfer', new Date().getTime())
 
   const random = (matches[3] === 'F') ? false : true
   const memo = matches[4] || ''
@@ -91,8 +88,6 @@ export async function createRedEnvelope(userId: number, args: string, i18n: TFun
     return [i18n('msg_create_transfer_failed')] //TODO: `${ret['Err']}`
   }
 
-  console.log('After transfer', new Date().getTime())
-
   const serviceActor = await getAgentActor()
   
   const re: RedEnvelope = {
@@ -106,8 +101,6 @@ export async function createRedEnvelope(userId: number, args: string, i18n: TFun
     amount: amount,
     expires_at: [] // expires_at: [expires_at]
   }
-
-  console.log('Before create', new Date().getTime())
 
   const ret2 = await serviceActor.create_red_envelope(re)
   if ('Err' in ret2) {
@@ -133,11 +126,7 @@ export async function createRedEnvelope(userId: number, args: string, i18n: TFun
       is_revoked: false
     }
 
-    console.log('After created', new Date().getTime())
-
     await S.insertReStatus(await createPool(), reStatus)
-
-    console.log('Insert re status', new Date().getTime())
     // select user/group
     // const keyboard = RBOT_SELECT_USER_GROUP_KEYBOARD(Number(rid), count, i18n)
     const res_obj = {
@@ -145,8 +134,6 @@ export async function createRedEnvelope(userId: number, args: string, i18n: TFun
       fee: bigintToString(fee_amount, parseInt(TOKEN_DECIMALS)),
       icrc1_fee: bigintToString(transFee * 2n, parseInt(TOKEN_DECIMALS)),
     }
-    console.log('End', new Date().getTime())
-    console.log('res_obj', res_obj)
     return [i18n('msg_create', res_obj), {
       rid: res_obj.id,
       fee: res_obj.fee,
@@ -191,6 +178,37 @@ export async function sendRedEnvelope(userId: number, args: string[], i18n: TFun
     return [i18n('msg_send'), keyboard]
   } else {
     return [i18n('reapp_error_1108', { id: args[0] })]
+  }
+}
+
+export async function getRedEnvelope(args: string[], i18n: TFunction): Promise<object> {
+  if (args.length !== 1) {
+    return [i18n('msg_how_to_send')]
+  }
+  try {
+    typeof BigInt(args[0]) === 'bigint'
+  } catch (error) {
+    return [i18n('msg_how_to_send')]
+  }
+  const serviceActor = await getAgentActor()
+  const ret = await serviceActor.get_red_envelope(BigInt(args[0]))
+  console.log('getRedEnvelope', ret)
+  if(ret.length === 0){
+    return {}
+  }
+  return {
+    ...ret[0],
+    participants: ret[0].participants.map((item: any) => {
+      const returnItem = {
+        principal: item[0].toText(),
+        nat: bigintToString(item[1], parseInt(TOKEN_DECIMALS)),
+      }
+      return returnItem
+    }),
+    amount: bigintToString(ret[0].amount, parseInt(TOKEN_DECIMALS)),
+    token_id: ret[0].token_id.toText(),
+    owner: ret[0].owner.toText(),
+    expires_at:[],
   }
 }
 
@@ -345,14 +363,15 @@ export async function listRedEnvelope(userId: number, args: string[], i18n: TFun
       ])
     }
   }
-  data.unshift(['No.', 'Amount', 'Left', 'Status']);
-  const tableString = table(data, { border: getBorderCharacters('ramac'), })
-  let htmlString = '<b>' + i18n('msg_my_re_title') + '</b>' + '\n'
-  htmlString += `<pre>${tableString}</pre>`
-  if (max > 1) {
-    htmlString += `\n【${page}】/【${max}】`
-  }
-  return htmlString
+  // data.unshift(['No.', 'Amount', 'Left', 'Status']);
+  return {page, max, data};
+  // const tableString = table(data, { border: getBorderCharacters('ramac'), })
+  // let htmlString = '<b>' + i18n('msg_my_re_title') + '</b>' + '\n'
+  // htmlString += `<pre>${tableString}</pre>`
+  // if (max > 1) {
+  //   htmlString += `\n【${page}】/【${max}】`
+  // }
+  // return htmlString
 }
 
 export async function showRedEnvelope(userName: string, args: string[], i18n: TFunction): Promise<[string, string?, object?]> {
