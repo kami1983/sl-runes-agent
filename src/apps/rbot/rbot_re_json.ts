@@ -102,7 +102,9 @@ export async function createRedEnvelope(userId: number, args: string, i18n: TFun
     expires_at: [] // expires_at: [expires_at]
   }
 
-  const ret2 = await serviceActor.create_red_envelope(re)
+  const ret2 = await serviceActor.create_red_envelope2(re)
+  console.log(ret2)
+
   if ('Err' in ret2) {
     const code = `reapp_error_${ret2['Err'][0].toString()}`
     if (errorWithRedEnvelopeId(code)) {
@@ -111,7 +113,7 @@ export async function createRedEnvelope(userId: number, args: string, i18n: TFun
       return [i18n(code)]
     }
   } else {
-    const rid = ret2['Ok']
+    const rid = ret2['Ok'][0]
     // assert((rid <= Number.MAX_SAFE_INTEGER && rid >= Number.MIN_SAFE_INTEGER), `Whoops ${rid} ...`)
     // insert db
     const reStatus = {
@@ -225,7 +227,8 @@ export async function grabRedEnvelope(userId: number, username: string, args: st
   await S.insertSnatchStatus(pool, { id: rid, uid: userId, code: -1, amount: 0n, discard: 0 })
   // snatch re
   const serviceActor = await getAgentActor()
-  const ret = await serviceActor.open_red_envelope(BigInt(args[0]), userPrincipal)
+  const ret = await serviceActor.open_red_envelope2(BigInt(args[0]), userPrincipal)
+  console.log('grabRedEnvelope', ret)
   if ('Err' in ret) {
     // update snatch status
     await S.updateSnatchStatus(pool, { id: rid, uid: userId, code: Number(ret['Err'][0]), amount: 0n, discard: 0 })
@@ -237,16 +240,20 @@ export async function grabRedEnvelope(userId: number, username: string, args: st
     }
   } else {
     // update snatch status
-    await S.updateSnatchStatus(pool, { id: rid, uid: userId, code: 0, amount: ret['Ok'], discard: 0 })
+    await S.updateSnatchStatus(pool, { id: rid, uid: userId, code: 0, amount: ret['Ok'].grab_amount, discard: 0 })
     // amount 8888 -> 88.88
-    const amount = bigintToString(ret['Ok'], parseInt(TOKEN_DECIMALS))
+    const amount = bigintToString(ret['Ok'].grab_amount, parseInt(TOKEN_DECIMALS))
     let msg = i18n('msg_snatch', { username, amount, id: args[0] })
     if (await S.getWallet(pool, userId) == undefined) {
       msg += '\n' + i18n('msg_snatch_suffix', { botname: RBOT_BOT_USERNAME })
     }
     return ['reapp_error_0', msg, {
       rid: rid,
-      amount: amount,
+      grab_amount: amount,
+      participants_num: ret['Ok'].participants_num,
+      all_num: ret['Ok'].all_num,
+      all_amount:  bigintToString(ret['Ok'].all_amount, parseInt(TOKEN_DECIMALS)),
+      unreceived_amount: bigintToString(ret['Ok'].unreceived_amount, parseInt(TOKEN_DECIMALS)),
     }]
   }
 }

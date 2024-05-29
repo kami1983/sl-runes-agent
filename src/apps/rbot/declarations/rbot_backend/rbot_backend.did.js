@@ -18,6 +18,10 @@ export const idlFactory = ({ IDL }) => {
     'Ok' : IDL.Nat,
     'Err' : IDL.Tuple(IDL.Nat64, IDL.Text),
   });
+  const Result_2 = IDL.Variant({
+    'Ok' : IDL.Tuple(IDL.Nat, IDL.Text),
+    'Err' : IDL.Tuple(IDL.Nat64, IDL.Text),
+  });
   const OldEnvelope = IDL.Record({
     'num' : IDL.Nat8,
     'status' : IDL.Nat8,
@@ -29,6 +33,19 @@ export const idlFactory = ({ IDL }) => {
     'amount' : IDL.Nat,
     'expires_at' : IDL.Opt(IDL.Nat64),
   });
+  const GrabRedEnvelopeResult = IDL.Record({
+    'log' : IDL.Opt(IDL.Text),
+    'rid' : IDL.Nat,
+    'participants_num' : IDL.Nat16,
+    'all_amount' : IDL.Nat,
+    'all_num' : IDL.Nat16,
+    'grab_amount' : IDL.Nat,
+    'unreceived_amount' : IDL.Nat,
+  });
+  const Result_3 = IDL.Variant({
+    'Ok' : GrabRedEnvelopeResult,
+    'Err' : IDL.Tuple(IDL.Nat64, IDL.Text),
+  });
   return IDL.Service({
     'add_agent_acc' : IDL.Func([IDL.Principal], [Result], []),
     'add_token_to_white_list' : IDL.Func(
@@ -37,6 +54,7 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'create_red_envelope' : IDL.Func([RedEnvelope], [Result_1], []),
+    'create_red_envelope2' : IDL.Func([RedEnvelope], [Result_2], []),
     'get_admin_acc' : IDL.Func([], [IDL.Principal], ['query']),
     'get_caller_and_apiid' : IDL.Func(
         [],
@@ -70,6 +88,7 @@ export const idlFactory = ({ IDL }) => {
       ),
     'is_token_in_white_list' : IDL.Func([IDL.Principal], [IDL.Bool], ['query']),
     'open_red_envelope' : IDL.Func([IDL.Nat, IDL.Principal], [Result_1], []),
+    'open_red_envelope2' : IDL.Func([IDL.Nat, IDL.Principal], [Result_3], []),
     'remove_token_from_white_list' : IDL.Func([IDL.Principal], [Result], []),
     'revoke_red_envelope' : IDL.Func([IDL.Nat], [Result_1], []),
     'set_admin_acc' : IDL.Func([IDL.Principal], [Result], []),

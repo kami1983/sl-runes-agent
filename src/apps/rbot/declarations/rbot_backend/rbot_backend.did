@@ -1,3 +1,12 @@
+type GrabRedEnvelopeResult = record {
+  log : opt text;
+  rid : nat;
+  participants_num : nat16;
+  all_amount : nat;
+  all_num : nat16;
+  grab_amount : nat;
+  unreceived_amount : nat;
+};
 type OldEnvelope = record {
   num : nat8;
   status : nat8;
@@ -22,10 +31,19 @@ type RedEnvelope = record {
 };
 type Result = variant { Ok; Err : record { nat64; text } };
 type Result_1 = variant { Ok : nat; Err : record { nat64; text } };
+type Result_2 = variant {
+  Ok : record { nat; text };
+  Err : record { nat64; text };
+};
+type Result_3 = variant {
+  Ok : GrabRedEnvelopeResult;
+  Err : record { nat64; text };
+};
 service : (principal) -> {
   add_agent_acc : (principal) -> (Result);
   add_token_to_white_list : (principal, nat8) -> (Result);
   create_red_envelope : (RedEnvelope) -> (Result_1);
+  create_red_envelope2 : (RedEnvelope) -> (Result_2);
   get_admin_acc : () -> (principal) query;
   get_caller_and_apiid : () -> (principal, principal) query;
   get_need_transfer_from_status : () -> (bool) query;
@@ -39,6 +57,7 @@ service : (principal) -> {
   is_there_pre_allocated_random : (nat) -> (bool) query;
   is_token_in_white_list : (principal) -> (bool) query;
   open_red_envelope : (nat, principal) -> (Result_1);
+  open_red_envelope2 : (nat, principal) -> (Result_3);
   remove_token_from_white_list : (principal) -> (Result);
   revoke_red_envelope : (nat) -> (Result_1);
   set_admin_acc : (principal) -> (Result);

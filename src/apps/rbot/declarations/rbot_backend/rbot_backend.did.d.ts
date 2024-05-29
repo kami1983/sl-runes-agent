@@ -2,6 +2,15 @@ import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
 import type { IDL } from '@dfinity/candid';
 
+export interface GrabRedEnvelopeResult {
+  'log' : [] | [string],
+  'rid' : bigint,
+  'participants_num' : number,
+  'all_amount' : bigint,
+  'all_num' : number,
+  'grab_amount' : bigint,
+  'unreceived_amount' : bigint,
+}
 export interface OldEnvelope {
   'num' : number,
   'status' : number,
@@ -28,10 +37,15 @@ export type Result = { 'Ok' : null } |
   { 'Err' : [bigint, string] };
 export type Result_1 = { 'Ok' : bigint } |
   { 'Err' : [bigint, string] };
+export type Result_2 = { 'Ok' : [bigint, string] } |
+  { 'Err' : [bigint, string] };
+export type Result_3 = { 'Ok' : GrabRedEnvelopeResult } |
+  { 'Err' : [bigint, string] };
 export interface _SERVICE {
   'add_agent_acc' : ActorMethod<[Principal], Result>,
   'add_token_to_white_list' : ActorMethod<[Principal, number], Result>,
   'create_red_envelope' : ActorMethod<[RedEnvelope], Result_1>,
+  'create_red_envelope2' : ActorMethod<[RedEnvelope], Result_2>,
   'get_admin_acc' : ActorMethod<[], Principal>,
   'get_caller_and_apiid' : ActorMethod<[], [Principal, Principal]>,
   'get_need_transfer_from_status' : ActorMethod<[], boolean>,
@@ -45,6 +59,7 @@ export interface _SERVICE {
   'is_there_pre_allocated_random' : ActorMethod<[bigint], boolean>,
   'is_token_in_white_list' : ActorMethod<[Principal], boolean>,
   'open_red_envelope' : ActorMethod<[bigint, Principal], Result_1>,
+  'open_red_envelope2' : ActorMethod<[bigint, Principal], Result_3>,
   'remove_token_from_white_list' : ActorMethod<[Principal], Result>,
   'revoke_red_envelope' : ActorMethod<[bigint], Result_1>,
   'set_admin_acc' : ActorMethod<[Principal], Result>,
