@@ -51,6 +51,10 @@ export interface _SERVICE {
   'get_need_transfer_from_status' : ActorMethod<[], boolean>,
   'get_old_red_envelope' : ActorMethod<[bigint], [] | [OldEnvelope]>,
   'get_red_envelope' : ActorMethod<[bigint], [] | [RedEnvelope]>,
+  'get_red_envelope2' : ActorMethod<
+    [bigint],
+    [] | [[RedEnvelope, GrabRedEnvelopeResult]]
+  >,
   'get_rids_by_owner' : ActorMethod<[Principal], Array<bigint>>,
   'get_rids_by_participant' : ActorMethod<[Principal], Array<bigint>>,
   'get_storage_version' : ActorMethod<[], bigint>,

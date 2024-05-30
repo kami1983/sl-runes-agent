@@ -68,6 +68,11 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'get_red_envelope' : IDL.Func([IDL.Nat], [IDL.Opt(RedEnvelope)], ['query']),
+    'get_red_envelope2' : IDL.Func(
+        [IDL.Nat],
+        [IDL.Opt(IDL.Tuple(RedEnvelope, GrabRedEnvelopeResult))],
+        ['query'],
+      ),
     'get_rids_by_owner' : IDL.Func(
         [IDL.Principal],
         [IDL.Vec(IDL.Nat)],

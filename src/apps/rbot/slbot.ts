@@ -100,7 +100,7 @@ async function actionSlCreate(uid: number, args: string){
 }
 
 async function actionSlGrab(uid: number, username: string, rid: string){
-  return await grabRedEnvelope(uid, username, [rid], getI18n())
+  return {res: await grabRedEnvelope(uid, username, [rid], getI18n()), username}
 }
 
 async function actionSlList(uid: number, args: string){

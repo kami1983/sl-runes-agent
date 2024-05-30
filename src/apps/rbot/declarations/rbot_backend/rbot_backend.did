@@ -49,6 +49,9 @@ service : (principal) -> {
   get_need_transfer_from_status : () -> (bool) query;
   get_old_red_envelope : (nat) -> (opt OldEnvelope) query;
   get_red_envelope : (nat) -> (opt RedEnvelope) query;
+  get_red_envelope2 : (nat) -> (
+      opt record { RedEnvelope; GrabRedEnvelopeResult },
+    ) query;
   get_rids_by_owner : (principal) -> (vec nat) query;
   get_rids_by_participant : (principal) -> (vec nat) query;
   get_storage_version : () -> (nat64) query;

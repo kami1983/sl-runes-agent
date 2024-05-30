@@ -66,6 +66,9 @@ export async function createRedEnvelope(userId: number, args: string, i18n: TFun
     return [i18n('msg_create_minimum', { amount: bigintToString(token.re_minimum_each, parseInt(TOKEN_DECIMALS)) })]
   }
 
+  // 输出时间戳
+  console.log('Before transfer:', new Date().getTime())
+
   const random = (matches[3] === 'F') ? false : true
   const memo = matches[4] || ''
   // default: utc nanoseconds + 24hours
@@ -88,6 +91,9 @@ export async function createRedEnvelope(userId: number, args: string, i18n: TFun
     return [i18n('msg_create_transfer_failed')] //TODO: `${ret['Err']}`
   }
 
+  // 输出时间戳
+  console.log('After transfer:', new Date().getTime())
+
   const serviceActor = await getAgentActor()
   
   const re: RedEnvelope = {
@@ -102,8 +108,14 @@ export async function createRedEnvelope(userId: number, args: string, i18n: TFun
     expires_at: [] // expires_at: [expires_at]
   }
 
+  // 输出时间戳
+  console.log('Before create_red_envelope:', new Date().getTime())
+  
   const ret2 = await serviceActor.create_red_envelope2(re)
   console.log(ret2)
+
+  // 输出时间戳
+  console.log('After create_red_envelope:', new Date().getTime())
 
   if ('Err' in ret2) {
     const code = `reapp_error_${ret2['Err'][0].toString()}`
@@ -193,24 +205,33 @@ export async function getRedEnvelope(args: string[], i18n: TFunction): Promise<o
     return [i18n('msg_how_to_send')]
   }
   const serviceActor = await getAgentActor()
-  const ret = await serviceActor.get_red_envelope(BigInt(args[0]))
+  const ret = await serviceActor.get_red_envelope2(BigInt(args[0]))
   console.log('getRedEnvelope', ret)
   if(ret.length === 0){
     return {}
   }
+  const base_ret = ret[0][0]
+  const expand_ret = ret[0][1]
   return {
-    ...ret[0],
-    participants: ret[0].participants.map((item: any) => {
+    ...base_ret,
+    participants: base_ret.participants.map((item: any) => {
       const returnItem = {
         principal: item[0].toText(),
         nat: bigintToString(item[1], parseInt(TOKEN_DECIMALS)),
       }
       return returnItem
     }),
-    amount: bigintToString(ret[0].amount, parseInt(TOKEN_DECIMALS)),
-    token_id: ret[0].token_id.toText(),
-    owner: ret[0].owner.toText(),
+    amount: bigintToString(base_ret.amount, parseInt(TOKEN_DECIMALS)),
+    token_id: base_ret.token_id.toText(),
+    owner: base_ret.owner.toText(),
     expires_at:[],
+    expand: {
+      grab_amount: bigintToString(expand_ret.grab_amount, parseInt(TOKEN_DECIMALS)),
+      all_num: expand_ret.all_num,
+      unreceived_amount: bigintToString(expand_ret.unreceived_amount, parseInt(TOKEN_DECIMALS)),
+      all_amount: bigintToString(expand_ret.all_amount, parseInt(TOKEN_DECIMALS)),
+      participants_num: expand_ret.participants_num,
+    }
   }
 }
 
