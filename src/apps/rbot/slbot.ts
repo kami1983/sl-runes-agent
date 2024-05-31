@@ -107,7 +107,10 @@ export const slCallback = async (req: Request, res: Response, next: NextFunction
     case '/sl/location/insert':
       const location = req.body.location;
       const status = req.body.status;
-      res.send(await actionLocationInsert({location, status}));
+      res.send(await actionLocationInsert({rid: req.body.rid, location, status}));
+      break;
+    case '/sl/location/delete':
+      res.send(await actionLocationDelete(req.body.rid));
       break;
     case '/sl/location/list':
       const minutes = req.body.minutes;
@@ -119,9 +122,13 @@ export const slCallback = async (req: Request, res: Response, next: NextFunction
 
 }
 
-
-async function actionLocationInsert(params: {location: string, status: number}) {
+async function actionLocationInsert(params: {rid: number, location: string, status: number}) {
   await S.insertSlLocation(await createPool(), params)
+  return {status: 'ok'}
+}
+
+async function actionLocationDelete(rid: number) {
+  await S.deleteSlLocation(await createPool(), rid)
   return {status: 'ok'}
 }
 

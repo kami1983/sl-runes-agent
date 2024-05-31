@@ -224,6 +224,7 @@ CREATE INDEX sl_location_update_time_idx ON public.sl_location (update_time);
  */
 export interface SlLocation {
   id?: number;
+  rid: number;
   location: string;
   status: number;
   create_time?: Date;
@@ -233,11 +234,18 @@ export interface SlLocation {
 export const insertSlLocation = async (pool: Knex.Knex, location: SlLocation) => {
   return await pool('sl_location')
     .insert({ ...location })
-    .onConflict('location')
+    .onConflict('rid')
     .merge({
+      location: pool.raw('EXCLUDED.location'),
       update_time: pool.raw('CURRENT_TIMESTAMP'),
       status: pool.raw('EXCLUDED.status'),
     });
+}
+
+export const deleteSlLocation = async (pool: Knex.Knex, rid: number) => {
+  await pool('sl_location')
+    .where('rid', rid)
+    .delete()
 }
 
 // 
