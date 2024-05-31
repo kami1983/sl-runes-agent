@@ -43,14 +43,22 @@ export const slCallback = async (req: Request, res: Response, next: NextFunction
 
   console.log(req.path)
 
-  if(!checkToken(req)) {
-    res.status(401).send('Unauthorized user');
-    return;
-  }
+  // if(!checkToken(req)) {
+  //   res.status(401).send('Unauthorized user');
+  //   return;
+  // }
 
   const _checkAgent = () => {
     if(!checkIsAgent()){
       res.status(401).send('Unauthorized agent');
+      return false;
+    }
+    return true
+  }
+
+  const _checkToken = () => {
+    if(!checkToken(req)){
+      res.status(401).send('Unauthorized user');
       return false;
     }
     return true
@@ -69,26 +77,56 @@ export const slCallback = async (req: Request, res: Response, next: NextFunction
       res.send(await actionSlWallet(uid));
       break;
     case '/sl/create':
-      if(_checkAgent()){
+      // if(_checkAgent()){
+      //   res.send(await actionSlCreate(uid, req.body.args));
+      // }
+      if(_checkToken()){
         res.send(await actionSlCreate(uid, req.body.args));
       }
       break;
     case '/sl/grab':
-      if(_checkAgent()){
+      // if(_checkAgent()){
+      //   const rid = req.body.rid;
+      //   res.send(await actionSlGrab(uid, username, rid));
+      // }
+      if(_checkToken()){
         const rid = req.body.rid;
         res.send(await actionSlGrab(uid, username, rid));
       }
       break;
     case '/sl/list':
-      res.send(await actionSlList(uid, req.body.args));
+      if(_checkToken()){
+        res.send(await actionSlList(uid, req.body.args));
+      }
       break;
     case '/sl/get':
+      if(_checkToken()){
         res.send(await actionSlGetRe(req.body.args));
-        break;
+      }
+      break;
+    case '/sl/location/insert':
+      const location = req.body.location;
+      const status = req.body.status;
+      res.send(await actionLocationInsert({location, status}));
+      break;
+    case '/sl/location/list':
+      const minutes = req.body.minutes;
+      res.send(await actionLocationList(minutes));
+      break;
     default:
       next();
   }
 
+}
+
+
+async function actionLocationInsert(params: {location: string, status: number}) {
+  await S.insertSlLocation(await createPool(), params)
+  return {status: 'ok'}
+}
+
+async function actionLocationList(minutes: number) {
+    return await S.getSLLocationList(await createPool(), minutes)
 }
 
 async function actionSlWallet(uid: number): Promise<ResultWalletInfos> {

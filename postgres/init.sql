@@ -56,3 +56,14 @@ CREATE TABLE users (
   update_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+
+CREATE TABLE sl_location(  
+    uid bigint NOT NULL PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    location TEXT NOT NULL,
+    status int8 DEFAULT 0 NOT NULL,
+    create_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX sl_location_create_time_idx ON public.sl_location (create_time);
+CREATE INDEX sl_location_update_time_idx ON public.sl_location (update_time);
+ALTER TABLE sl_location ADD CONSTRAINT unique_location UNIQUE (location);

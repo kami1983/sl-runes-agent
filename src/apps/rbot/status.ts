@@ -211,6 +211,43 @@ export const insertWallet = async (pool: Knex.Knex, wallet: Wallet) => {
     .whereNull('wallets.channel')
 }
 
+/**
+ * CREATE TABLE sl_location(  
+    id int NOT NULL PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    location TEXT NOT NULL,
+    status int8 DEFAULT 0 NOT NULL,
+    create_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX sl_location_create_time_idx ON public.sl_location (create_time);
+CREATE INDEX sl_location_update_time_idx ON public.sl_location (update_time);
+ */
+export interface SlLocation {
+  id?: number;
+  location: string;
+  status: number;
+  create_time?: Date;
+  update_time?: Date;
+}
+
+export const insertSlLocation = async (pool: Knex.Knex, location: SlLocation) => {
+  return await pool('sl_location')
+    .insert({ ...location })
+    .onConflict('location')
+    .merge({
+      update_time: pool.raw('CURRENT_TIMESTAMP'),
+      status: pool.raw('EXCLUDED.status'),
+    });
+}
+
+// 
+export const getSLLocationList = async (pool: Knex.Knex, minutes: number): Promise<SlLocation[]> => {
+  const startTime = new Date((new Date()).getTime() - minutes * 60 * 1000)
+  return await pool('sl_location')
+    .where('update_time', '>=', startTime.toISOString())
+    .select() as SlLocation[]
+}
+
 export const getWallet = async (pool: Knex.Knex, uid: number) => {
   return await pool('wallets')
     .where({ uid })
