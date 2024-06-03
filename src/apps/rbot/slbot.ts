@@ -107,7 +107,12 @@ export const slCallback = async (req: Request, res: Response, next: NextFunction
     case '/sl/location/insert':
       const location = req.body.location;
       const status = req.body.status;
-      res.send(await actionLocationInsert({rid: req.body.rid, location, status}));
+      if(location !== undefined && location != '' && status !== undefined && status != '') {
+        res.send(await actionLocationInsert({rid: req.body.rid, location, status}));
+      }else{
+        res.send({status: 'error', message: 'invalid location or status'})
+      }
+      
       break;
     case '/sl/location/delete':
       res.send(await actionLocationDelete(req.body.rid));
