@@ -213,6 +213,7 @@ export async function getRedEnvelope(args: string[], i18n: TFunction): Promise<o
   const base_ret = ret[0][0]
   const expand_ret = ret[0][1]
   return {
+    rid: args[0],
     ...base_ret,
     participants: base_ret.participants.map((item: any) => {
       const returnItem = {
