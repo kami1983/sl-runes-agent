@@ -105,6 +105,7 @@ export const slCallback = async (req: Request, res: Response, next: NextFunction
       }
       break;
     case '/sl/location/insert':
+      console.log('req.body: insert : ', req.body)
       const location = req.body.location;
       const status = req.body.status;
       if(location !== undefined && location != '' && status !== undefined && status != '') {
