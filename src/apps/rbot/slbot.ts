@@ -74,14 +74,14 @@ export const slCallback = async (req: Request, res: Response, next: NextFunction
 
   switch (req.path) {
     case '/sl/wallet':
-      res.send(await actionSlWallet(uid));
+      res.send([{get: req.query, post: req.body}, await actionSlWallet(uid)]);
       break;
     case '/sl/create':
       // if(_checkAgent()){
       //   res.send(await actionSlCreate(uid, req.body.args));
       // }
       if(_checkToken()){
-        res.send(await actionSlCreate(uid, req.body.args));
+        res.send([{get: req.query, post: req.body}, await actionSlCreate(uid, req.body.args)]);
       }
       break;
     case '/sl/grab':
@@ -91,17 +91,17 @@ export const slCallback = async (req: Request, res: Response, next: NextFunction
       // }
       if(_checkToken()){
         const rid = req.body.rid;
-        res.send(await actionSlGrab(uid, username, rid));
+        res.send([{get: req.query, post: req.body}, await actionSlGrab(uid, username, rid)]);
       }
       break;
     case '/sl/list':
       if(_checkToken()){
-        res.send(await actionSlList(uid, req.body.args));
+        res.send([{get: req.query, post: req.body}, await actionSlList(uid, req.body.args)]);
       }
       break;
     case '/sl/get':
       if(_checkToken()){
-        res.send(await actionSlGetRe(req.body.args));
+        res.send([{get: req.query, post: req.body}, await actionSlGetRe(req.body.args)]);
       }
       break;
     case '/sl/location/insert':
@@ -109,18 +109,18 @@ export const slCallback = async (req: Request, res: Response, next: NextFunction
       const location = req.body.location;
       const status = req.body.status;
       if(location !== undefined && location != '' && status !== undefined && status != '') {
-        res.send(await actionLocationInsert({rid: req.body.rid, location, status}));
+        res.send([{get: req.query, post: req.body}, await actionLocationInsert({rid: req.body.rid, location, status})]);
       }else{
-        res.send({status: 'error', message: 'invalid location or status'})
+        res.send([{get: req.query, post: req.body}, {status: 'error', message: 'invalid location or status'}])
       }
       
       break;
     case '/sl/location/delete':
-      res.send(await actionLocationDelete(req.body.rid));
+      res.send([{get: req.query, post: req.body}, await actionLocationDelete(req.body.rid)]);
       break;
     case '/sl/location/list':
       const minutes = req.body.minutes;
-      res.send(await actionLocationList(minutes));
+      res.send([{get: req.query, post: req.body}, await actionLocationList(minutes)]);
       break;
     default:
       next();
