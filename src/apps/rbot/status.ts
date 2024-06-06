@@ -251,6 +251,8 @@ export const deleteSlLocation = async (pool: Knex.Knex, rid: number) => {
 // 
 export const getSLLocationList = async (pool: Knex.Knex, minutes: number): Promise<SlLocation[]> => {
   const startTime = new Date((new Date()).getTime() - minutes * 60 * 1000)
+
+  console.log('startTime: ', startTime)
   return await pool('sl_location')
     .where('update_time', '>=', startTime.toISOString())
     .orderBy('update_time', 'desc')
