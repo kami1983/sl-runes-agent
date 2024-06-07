@@ -81,10 +81,18 @@ export const getReStatus = async (pool: Knex.Knex, id: number, uid: number) => {
     .first() as ReStatus | undefined
 }
 
-export const getReStatusByIds = async (pool: Knex.Knex, ids: number[], uid: number) => {
+export const getReStatusByIds = async (pool: Knex.Knex, ids: number[], uid: number, share_count?: number) => {
+  
+  if(share_count == undefined || share_count < 1) {
+    share_count = share_count || 9999999
+  }
+
+  console.log('share_count: ', share_count)
+  
   return await pool('re_status')
     .whereIn('id', ids)
     .andWhere('uid', uid)
+    .andWhere('count', '<=', share_count)
     .orderBy('id', 'desc')
     .select() as ReStatus[]
 }

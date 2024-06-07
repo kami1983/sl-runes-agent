@@ -321,7 +321,7 @@ export async function revokeRedEnvelope(userId: number, args: string[], i18n: TF
   }
 }
 
-export async function listRedEnvelope(userId: number, args: string[], i18n: TFunction) {
+export async function listRedEnvelope(userId: number, args: string[], i18n: TFunction, share_count?: number,) {
   const userIdentity = getUserIdentity(userId)
   const serviceActor = await getAgentActor()
   const rids = await serviceActor.get_rids_by_owner(userIdentity.getPrincipal())
@@ -329,12 +329,14 @@ export async function listRedEnvelope(userId: number, args: string[], i18n: TFun
     const status = await Promise.all(rids.map(async (rid) => {
       let amount = 0n
       let used = 0n
+      let share_num = 0
       const ret = await serviceActor.get_red_envelope(BigInt(rid))
       if (ret[0]?.participants) {
         amount = ret[0].amount
+        share_num = ret[0].num
         used = ret[0]?.participants.reduce((total, value) => total + value[1], BigInt(0))
       }
-      return { rid, amount, used }
+      return { rid, amount, used, share_num}
     }))
     return status
   }
@@ -360,7 +362,7 @@ export async function listRedEnvelope(userId: number, args: string[], i18n: TFun
   const pageDataNumber = pageData.map(bigint => Number(bigint))
   // console.log('listRedEnvelope t1: ', (new Date()).toISOString())
   const scStatus = await getStatusFromCanister(rids)
-  const dbStatus = await S.getReStatusByIds(await createPool(), pageDataNumber, userId)
+  const dbStatus = await S.getReStatusByIds(await createPool(), pageDataNumber, userId, share_count)
   // console.log('listRedEnvelope t2: ', (new Date()).toISOString())
   const data: string[][] = []
   for (const id of pageDataNumber) {
@@ -369,6 +371,7 @@ export async function listRedEnvelope(userId: number, args: string[], i18n: TFun
     if (scItem) {
       const amount = scItem.amount
       const remain = scItem.amount - scItem.used
+      const share_count = scItem.share_num
       let status = 'Unsent'
       if (dbItem) {
         if (dbItem.is_revoked) {
@@ -388,7 +391,8 @@ export async function listRedEnvelope(userId: number, args: string[], i18n: TFun
         id.toString(),
         bigintToString(amount, parseInt(TOKEN_DECIMALS)),
         bigintToString(remain, parseInt(TOKEN_DECIMALS)),
-        status
+        status,
+        share_count.toString()
       ])
     }
   }
