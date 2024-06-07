@@ -254,14 +254,15 @@ export const getSLLocationList = async (pool: Knex.Knex, minutes: number): Promi
 
   console.log('minutes - ', minutes)
 
-  if(minutes < 1) {
-    minutes = 60
+  if( minutes == undefined || minutes < 1) {
+    minutes = 600
   }
 
   const startTime = new Date((new Date()).getTime() - minutes * 60 * 1000)
   console.log('startTime: ', startTime)
 
   return await pool('sl_location')
+    .column('rid', 'location', 'status')
     .where('update_time', '>=', startTime.toISOString())
     .orderBy('update_time', 'desc')
     .select() as SlLocation[]
