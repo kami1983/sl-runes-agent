@@ -272,6 +272,8 @@ export const getSLLocationList = async (pool: Knex.Knex, minutes: number): Promi
   return await pool('sl_location')
     .column('rid', 'location', 'status')
     .where('update_time', '>=', startTime.toISOString())
+    // 只返回 status > 0 的记录
+    .andWhere('status', '>', 0)
     .orderBy('update_time', 'desc')
     .select() as SlLocation[]
 }
