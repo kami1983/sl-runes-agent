@@ -1,3 +1,4 @@
+import { number } from 'bitcoinjs-lib/src/script';
 import Knex from 'knex';
 
 /*
@@ -252,9 +253,14 @@ export const deleteSlLocation = async (pool: Knex.Knex, rid: number) => {
 export const getSLLocationList = async (pool: Knex.Knex, minutes: number): Promise<SlLocation[]> => {
 
   console.log('minutes - ', minutes)
-  const startTime = new Date((new Date()).getTime() - minutes * 60 * 1000)
 
+  if(minutes < 1) {
+    minutes = 60
+  }
+
+  const startTime = new Date((new Date()).getTime() - minutes * 60 * 1000)
   console.log('startTime: ', startTime)
+
   return await pool('sl_location')
     .where('update_time', '>=', startTime.toISOString())
     .orderBy('update_time', 'desc')
