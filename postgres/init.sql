@@ -68,3 +68,15 @@ CREATE TABLE sl_location(
 CREATE INDEX sl_location_create_time_idx ON public.sl_location (create_time);
 CREATE INDEX sl_location_update_time_idx ON public.sl_location (update_time);
 ALTER TABLE sl_location ADD CONSTRAINT unique_location_rid UNIQUE (rid);
+
+CREATE TABLE global_vars (  
+    id int NOT NULL PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    create_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    name VARCHAR(255),
+    global_key VARCHAR(225) NOT NULL,
+    global_value TEXT,
+    status int8 DEFAULT 0 NOT NULL,
+    UNIQUE (global_key)
+);
+

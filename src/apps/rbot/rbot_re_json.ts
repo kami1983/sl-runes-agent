@@ -22,7 +22,7 @@ const RBOT_BOT_USERNAME = process.env.RBOT_BOT_USERNAME || ""
 const TOKEN_SYMBOL = process.env.RBOT_TOKEN_SYMBOL || ""
 const TOKEN_DECIMALS = process.env.RBOT_TOKEN_DECIMALS || "2"
 
-export async function createRedEnvelope(userId: number, args: string, i18n: TFunction): Promise<[string, object?]> {
+export async function createRedEnvelope(userId: number, args: string, i18n: TFunction): Promise<[string, object?, object?]> {
   const token = await getTokenBySymbol(await createPool(), TOKEN_SYMBOL)
   if (!token) {
     return [i18n('msg_how_to_create')]
@@ -154,7 +154,7 @@ export async function createRedEnvelope(userId: number, args: string, i18n: TFun
       count: count,
       amount: raw_amount,
       icrc1_fee: res_obj.icrc1_fee,
-    }]
+    }, {memo}]
   }
 }
 

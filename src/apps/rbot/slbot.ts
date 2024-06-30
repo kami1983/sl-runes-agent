@@ -77,9 +77,6 @@ export const slCallback = async (req: Request, res: Response, next: NextFunction
       res.send([{get: req.query, post: req.body}, await actionSlWallet(uid)]);
       break;
     case '/sl/create':
-      // if(_checkAgent()){
-      //   res.send(await actionSlCreate(uid, req.body.args));
-      // }
       if(_checkToken()){
         res.send([{get: req.query, post: req.body}, await actionSlCreate(uid, req.body.args)]);
       }
@@ -122,10 +119,28 @@ export const slCallback = async (req: Request, res: Response, next: NextFunction
       const minutes = req.body.minutes;
       res.send([{get: req.query, post: req.body}, await actionLocationList(minutes)]);
       break;
+    case '/sl/global/keys/update':
+      res.send([{get: req.query, post: req.body}, await actionUpdateGlobalKeys(Object.entries(req.body) as [string, string][])]);
+      break;
+    case '/sl/global/keys/get':
+      // Get post data of keys
+      const keys = (req.body.keys??'').split(',');
+      res.send([{get: req.query, post: req.body}, await actionGetGlobalKeys(keys)]);
+      break;
     default:
       next();
   }
 
+}
+
+async function actionGetGlobalKeys(keys: []) {
+  const res = await S.getGlobalKeys(await createPool(), keys)
+  return {status: 'ok', res}
+}
+
+async function actionUpdateGlobalKeys(keys: [string, string][]) {
+  const res = await S.updateGlobalKeys(await createPool(), keys)
+  return {status: 'ok', res}
 }
 
 async function actionLocationInsert(params: {rid: number, location: string, status: number}) {

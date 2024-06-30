@@ -251,6 +251,54 @@ export const insertSlLocation = async (pool: Knex.Knex, location: SlLocation) =>
     });
 }
 
+/* 数据表：
+CREATE TABLE table_name(  
+    id int NOT NULL PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    create_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    name VARCHAR(255),
+    global_key VARCHAR(225) NOT NULL,
+    globle_value TEXT,
+    status int8 DEFAULT 0 NOT NULL,
+    UNIQUE (global_key)
+);
+*/
+export const updateGlobalKeys = async (pool: Knex.Knex, keys: [string, string][]) => {
+  // keys = {key1: value1, key2: value2}
+  // 那么将会更新或插入两条记录
+  console.log('keys: ', keys)
+  let result = []
+  for (const idx in keys) {
+    console.log('key: ', keys[idx][0], ' value: ', keys[idx][1])
+    result.push(
+    await pool('global_vars')
+      .insert({
+        global_key: keys[idx][0],
+        global_value: keys[idx][1],
+      })
+      .onConflict('global_key')
+      .merge({
+        global_value: keys[idx][1],
+        update_time: pool.fn.now(),
+      }))
+  }
+  return result
+}
+
+export const getGlobalKeys = async (pool: Knex.Knex, keys: []) => {
+  let resmap: any = {}
+  
+  for (const idx in keys) {
+    const key = keys[idx]
+    const value = await pool('global_vars')
+      .select('global_value')
+      .where('global_key', key)
+      .first()
+    resmap[key] = value
+  }
+  return resmap
+}
+
 export const deleteSlLocation = async (pool: Knex.Knex, rid: number) => {
   await pool('sl_location')
     .where('rid', rid)
