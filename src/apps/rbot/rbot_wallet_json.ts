@@ -34,6 +34,7 @@ export type ResultWalletInfos = {
 }
 
 export async function showWallet(userId: number, i18n: TFunction) : Promise<ResultWalletInfos> {
+  console.log('Show Wallet: ', userId)
   const principal: Principal = getUserIdentity(userId).getPrincipal()
   const accountId: AccountIdentifier = AccountIdentifier.fromPrincipal({ principal })
   const balance = await getBalance(userId)
@@ -105,12 +106,15 @@ export async function transferToken(userId: number, args: string[], i18n: TFunct
 
   let pattern = new RegExp('^(\\d+(?:\\.\\d{1,' + _decimal + '})?)$')
   const matches = _amount.match(pattern)
+
   if (matches == null) {
     return i18n('msg_how_to_transfer')
   }
 
   const amount = stringToBigint(_amount, parseInt(_decimal))
+  console.log('_token: ', {_token, amount} )
   const token = await getTokenBySymbol(await createPool(), _token)
+  
   if (!token) {
     return i18n('msg_how_to_transfer')
   }
@@ -127,6 +131,8 @@ export async function transferToken(userId: number, args: string[], i18n: TFunct
     if (!to._isPrincipal) {
       return i18n('msg_how_to_transfer')
     }
+
+    console.log('tranfer: ', {token, userId, amount, to})
 
     const ret = await icrc1Transfer(token, userId, amount, to)
     if ('Err' in ret) {
@@ -205,6 +211,7 @@ export async function transferToken(userId: number, args: string[], i18n: TFunct
         return i18n('msg_how_to_transfer')
       }
     } else {
+      console.log('RUN 4 ')
       return i18n('msg_how_to_transfer')
     }
   }

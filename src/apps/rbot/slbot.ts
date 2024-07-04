@@ -10,7 +10,7 @@ import { createPool } from '../../tokens'
 import i18next, { I18nContext, getLanguage, setLanguage } from "./i18n"
 import express, { Request, Response, NextFunction } from 'express';
 
-import { ResultWalletInfos, showWallet } from './rbot_wallet_json';
+import { ResultWalletInfos, showWallet, transferToken } from './rbot_wallet_json';
 import { createRedEnvelope, getRedEnvelope, grabRedEnvelope, isAgentAcc, listRedEnvelope } from "./rbot_re_json";
 import { getAgentIdentity, getUserIdentity, delegateIdentity, uuidToNumber } from '../../identity'
 
@@ -101,6 +101,11 @@ export const slCallback = async (req: Request, res: Response, next: NextFunction
         res.send([{get: req.query, post: req.body}, await actionSlGetRe(req.body.args)]);
       }
       break;
+    case '/sl/transfer':
+      if(_checkToken()){
+        res.send([{get: req.query, post: req.body}, await actionSlTransfer(uid, req.body.args)]);
+      }
+      break;
     case '/sl/location/insert':
       console.log('req.body: insert : ', req.body)
       const location = req.body.location;
@@ -131,6 +136,19 @@ export const slCallback = async (req: Request, res: Response, next: NextFunction
       next();
   }
 
+}
+
+/**
+ * /transfer 100 bc1qa3f4cmcmhze5nqsuanltf759mm9cfqd4wmls0w
+ * /transfer 100 kqwog-a4rvg-b7zzv-4skt7-fzosi-gtaub-xdkpi-4ywbu-mz23j-rfvoq-sqe
+ * 
+ * /transfer ICP 100 kqwog-a4rvg-b7zzv-4skt7-fzosi-gtaub-xdkpi-4ywbu-mz23j-rfvoq-sqe
+ * /transfer ICP 100 96427a419d7608353f7a1d0c5529218dbf695b803ddc4ddb1f78b654b06a0b35
+ */
+// export async function transferToken(userId: number, args: string[], i18n: TFunction): Promise<string> 
+async function actionSlTransfer(uid: number, args: string){
+  console.log('args A: ', args)
+  return await transferToken(uid, args.split(' '), getI18n())
 }
 
 async function actionGetGlobalKeys(keys: []) {

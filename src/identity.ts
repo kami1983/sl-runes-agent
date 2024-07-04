@@ -43,6 +43,8 @@ export async function delegateIdentity(userId: number, canisterId?: string) {
   const agentIdentity = getAgentIdentity();
   const userIdentity = getUserIdentity(userId)
 
+  console.log('userIdentity - ', userId, userIdentity.getPrincipal().toText())
+
   const delegationChain = await DelegationChain.create(
     userIdentity,
     agentIdentity.getPublicKey(),

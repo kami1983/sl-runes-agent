@@ -37,6 +37,7 @@ export async function icrc1Transfer(token: Token, userid: number, amount: Tokens
     memo: [],
     created_at_time: []
   }
+  console.log('transferArg:', transferArg )
   const actor = await getTokenActor(token, userid, true);
   return actor.icrc1_transfer(transferArg)
 }
