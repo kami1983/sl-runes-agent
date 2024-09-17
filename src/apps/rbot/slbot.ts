@@ -64,7 +64,7 @@ export const slCallback = async (req: Request, res: Response, next: NextFunction
     return true
   }
 
-  const { uid, username } = extractUser(req);
+  const { uid, username, tid } = extractUser(req);
   await S.insertUser(await createPool(), {
     uid,
     username,
@@ -74,11 +74,11 @@ export const slCallback = async (req: Request, res: Response, next: NextFunction
 
   switch (req.path) {
     case '/sl/wallet':
-      res.send([{get: req.query, post: req.body}, await actionSlWallet(uid)]);
+      res.send([{get: req.query, post: req.body}, await actionSlWallet(tid, uid)]);
       break;
     case '/sl/create':
       if(_checkToken()){
-        res.send([{get: req.query, post: req.body}, await actionSlCreate(uid, req.body.args)]);
+        res.send([{get: req.query, post: req.body}, await actionSlCreate(tid, uid, req.body.args)]);
       }
       break;
     case '/sl/grab':
@@ -88,7 +88,7 @@ export const slCallback = async (req: Request, res: Response, next: NextFunction
       // }
       if(_checkToken()){
         const rid = req.body.rid;
-        res.send([{get: req.query, post: req.body}, await actionSlGrab(uid, username, rid)]);
+        res.send([{get: req.query, post: req.body}, await actionSlGrab(tid, uid, username, rid)]);
       }
       break;
     case '/sl/list':
@@ -103,7 +103,7 @@ export const slCallback = async (req: Request, res: Response, next: NextFunction
       break;
     case '/sl/transfer':
       if(_checkToken()){
-        res.send([{get: req.query, post: req.body}, await actionSlTransfer(uid, req.body.args)]);
+        res.send([{get: req.query, post: req.body}, await actionSlTransfer(tid, uid, req.body.args)]);
       }
       break;
     case '/sl/location/insert':
@@ -146,9 +146,9 @@ export const slCallback = async (req: Request, res: Response, next: NextFunction
  * /transfer ICP 100 96427a419d7608353f7a1d0c5529218dbf695b803ddc4ddb1f78b654b06a0b35
  */
 // export async function transferToken(userId: number, args: string[], i18n: TFunction): Promise<string> 
-async function actionSlTransfer(uid: number, args: string){
+async function actionSlTransfer(tid: number, uid: number, args: string){
   console.log('args A: ', args)
-  return await transferToken(uid, args.split(' '), getI18n())
+  return await transferToken(tid, uid, args.split(' '), getI18n())
 }
 
 async function actionGetGlobalKeys(keys: []) {
@@ -175,16 +175,16 @@ async function actionLocationList(minutes: number) {
     return await S.getSLLocationList(await createPool(), minutes)
 }
 
-async function actionSlWallet(uid: number): Promise<ResultWalletInfos> {
-  return await showWallet(uid, getI18n())
+async function actionSlWallet(tid: number, uid: number): Promise<ResultWalletInfos> {
+  return await showWallet(tid, uid, getI18n())
 }
 
-async function actionSlCreate(uid: number, args: string){
-  return await createRedEnvelope(uid, args, getI18n())
+async function actionSlCreate(tid: number, uid: number, args: string){
+  return await createRedEnvelope(tid, uid, args, getI18n())
 }
 
-async function actionSlGrab(uid: number, username: string, rid: string){
-  return {res: await grabRedEnvelope(uid, username, [rid], getI18n()), username}
+async function actionSlGrab(tid: number, uid: number, username: string, rid: string){
+  return {res: await grabRedEnvelope(tid, uid, username, [rid], getI18n()), username}
 }
 
 async function actionSlList(uid: number, args: string, share_count?: number){
@@ -216,10 +216,12 @@ function checkToken(req: Request): boolean {
   return true
 }
 
-function extractUser(req: Request): { uid: number, username: string } {
+function extractUser(req: Request): { uid: number, username: string, tid: number} {
   const uid = uuidToNumber(req.query.uid?.toString()??'0');
   const username = req.query.username?.toString()??'';
-  return { uid, username }
+  const tid = parseInt( req.query.tid?.toString()??'0');
+  console.log('extractUser:', {uid, username, tid})
+  return { uid, username, tid }
 }
 
 // const express = require('express');

@@ -6,7 +6,7 @@ import { TFunction } from "i18next"
 import { join } from "path"
 import sharp from 'sharp'
 
-import { makeAgent } from '../../utils'
+import { getTokenDecimalByTid, getTokenSymbolByTid, makeAgent } from '../../utils'
 import { getAgentIdentity, getUserIdentity } from '../../identity'
 import { createPool, getTokenBySymbol, getTokenBycanister } from '../../tokens'
 import { icrc1BalanceOf, icrc1Transfer, icrc1Fee } from "../ledger/icrc1"
@@ -22,13 +22,25 @@ const RBOT_BOT_USERNAME = process.env.RBOT_BOT_USERNAME || ""
 const TOKEN_SYMBOL = process.env.RBOT_TOKEN_SYMBOL || ""
 const TOKEN_DECIMALS = process.env.RBOT_TOKEN_DECIMALS || "2"
 
-export async function createRedEnvelope(userId: number, args: string, i18n: TFunction): Promise<[string, object?, object?]> {
-  const token = await getTokenBySymbol(await createPool(), TOKEN_SYMBOL)
+export async function createRedEnvelope(tid: number, userId: number, args: string, i18n: TFunction): Promise<[string, object?, object?]> {
+
+  console.log('RUN - createRedEnvelope')
+  const _token_symbol = getTokenSymbolByTid(tid)
+  if (_token_symbol == null) {
+    return [i18n('msg_how_to_create')]
+  }
+
+  const token = await getTokenBySymbol(await createPool(), _token_symbol)
   if (!token) {
     return [i18n('msg_how_to_create')]
   }
 
   if (args === null || args === undefined) {
+    return [i18n('msg_how_to_create')]
+  }
+
+  const _decimal = getTokenDecimalByTid(tid)
+  if(_decimal == null) {
     return [i18n('msg_how_to_create')]
   }
 
@@ -39,7 +51,7 @@ export async function createRedEnvelope(userId: number, args: string, i18n: TFun
    * 88 5 F ababbaba
    * /^(\d+)\s+(\d+)(?:\s+(F\b))?(?:\s+(.*))?$/
    */
-  let amountPattern = '\\d+(?:\\.\\d{1,' + TOKEN_DECIMALS + '})?';
+  let amountPattern = '\\d+(?:\\.\\d{1,' + _decimal.toString() + '})?';
   let creationPattern = '^(' + amountPattern + ')\\s+(\\d+)(?:\\s+(F\\b))?(?:\\s+(.*))?$';
   const pattern = new RegExp(creationPattern);
   // const pattern = /^(\d+)\s+(\d+)(?:\s+(F\b))?(?:\s+(.*))?$/
@@ -50,23 +62,24 @@ export async function createRedEnvelope(userId: number, args: string, i18n: TFun
 
   // amount 88.88 -> 8888
   const raw_amount = matches[1]
-  const amount = stringToBigint(raw_amount, parseInt(TOKEN_DECIMALS))
+  const amount = stringToBigint(raw_amount, _decimal)
+  console.log('raw - amount:', {raw_amount, amount, _token_symbol, _decimal} )
   const count = parseInt(matches[2], 10);
   if (isNaN(count) || String(count) !== matches[2]) {
     return [i18n('msg_how_to_create')]
   }
   // amount <= 1000000.00 && count <=255 && each re minimum 
-  if (amount > 100000000n) {
+  if (amount > stringToBigint('100000', _decimal)) {
     return [i18n('msg_amount_maximum')]
   }
   if (count > 1000) {
     return [i18n('msg_count_maximum')]
   }
   if (amount / BigInt(count) < token.re_minimum_each) {
-    return [i18n('msg_create_minimum', { amount: bigintToString(token.re_minimum_each, parseInt(TOKEN_DECIMALS)) })]
+    return [i18n('msg_create_minimum', { amount: bigintToString(token.re_minimum_each, _decimal) })]
   }
 
-  // 输出时间戳
+  // out put time stamp
   console.log('Before transfer:', new Date().getTime())
 
   const random = (matches[3] === 'F') ? false : true
@@ -80,7 +93,7 @@ export async function createRedEnvelope(userId: number, args: string, i18n: TFun
   const transFee = await icrc1Fee(token, userId)
   const total = amount + fee_amount + transFee * 2n
   if (balance < total) {
-    return [i18n('msg_create_insufficient', { amount: bigintToString(total, parseInt(TOKEN_DECIMALS)) })]
+    return [i18n('msg_create_insufficient', { amount: bigintToString(total, _decimal) })]
   }
   let ret = await icrc1Transfer(token, userId, amount, Principal.fromText(RBOT_CANISTER_ID))
   if ('Err' in ret) {
@@ -91,7 +104,7 @@ export async function createRedEnvelope(userId: number, args: string, i18n: TFun
     return [i18n('msg_create_transfer_failed')] //TODO: `${ret['Err']}`
   }
 
-  // 输出时间戳
+  // out put time stamp
   console.log('After transfer:', new Date().getTime())
 
   const serviceActor = await getAgentActor()
@@ -108,13 +121,13 @@ export async function createRedEnvelope(userId: number, args: string, i18n: TFun
     expires_at: [] // expires_at: [expires_at]
   }
 
-  // 输出时间戳
+  // out put time stamp
   console.log('Before create_red_envelope:', new Date().getTime())
   
   const ret2 = await serviceActor.create_red_envelope2(re)
   console.log(ret2)
 
-  // 输出时间戳
+  // out put time stamp
   console.log('After create_red_envelope:', new Date().getTime())
 
   if ('Err' in ret2) {
@@ -145,8 +158,8 @@ export async function createRedEnvelope(userId: number, args: string, i18n: TFun
     // const keyboard = RBOT_SELECT_USER_GROUP_KEYBOARD(Number(rid), count, i18n)
     const res_obj = {
       id: rid.toString(),
-      fee: bigintToString(fee_amount, parseInt(TOKEN_DECIMALS)),
-      icrc1_fee: bigintToString(transFee * 2n, parseInt(TOKEN_DECIMALS)),
+      fee: bigintToString(fee_amount, _decimal),
+      icrc1_fee: bigintToString(transFee * 2n, _decimal),
     }
     return [i18n('msg_create', res_obj), {
       rid: res_obj.id,
@@ -236,7 +249,15 @@ export async function getRedEnvelope(args: string[], i18n: TFunction): Promise<o
   }
 }
 
-export async function grabRedEnvelope(userId: number, username: string, args: string[], i18n: TFunction): Promise<[string, string, object?]> {
+export async function grabRedEnvelope(tid: number, userId: number, username: string, args: string[], i18n: TFunction): Promise<[string, string, object?]> {
+  
+  const _decimal = getTokenDecimalByTid(tid)
+  const _token_symbol = getTokenSymbolByTid(tid)
+
+  if(_decimal == null || _token_symbol == null) {
+    return ['tid error', 'Can not find token-symbol or token-decimal by tid']
+  }
+  
   const rid = Number(args[0]);
   const pool = await createPool()
 
@@ -264,7 +285,7 @@ export async function grabRedEnvelope(userId: number, username: string, args: st
     // update snatch status
     await S.updateSnatchStatus(pool, { id: rid, uid: userId, code: 0, amount: ret['Ok'].grab_amount, discard: 0 })
     // amount 8888 -> 88.88
-    const amount = bigintToString(ret['Ok'].grab_amount, parseInt(TOKEN_DECIMALS))
+    const amount = bigintToString(ret['Ok'].grab_amount, _decimal)
     let msg = i18n('msg_snatch', { username, amount, id: args[0] })
     if (await S.getWallet(pool, userId) == undefined) {
       msg += '\n' + i18n('msg_snatch_suffix', { botname: RBOT_BOT_USERNAME })
@@ -274,8 +295,8 @@ export async function grabRedEnvelope(userId: number, username: string, args: st
       grab_amount: amount,
       participants_num: ret['Ok'].participants_num,
       all_num: ret['Ok'].all_num,
-      all_amount:  bigintToString(ret['Ok'].all_amount, parseInt(TOKEN_DECIMALS)),
-      unreceived_amount: bigintToString(ret['Ok'].unreceived_amount, parseInt(TOKEN_DECIMALS)),
+      all_amount:  bigintToString(ret['Ok'].all_amount, _decimal),
+      unreceived_amount: bigintToString(ret['Ok'].unreceived_amount, _decimal),
     }]
   }
 }

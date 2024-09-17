@@ -11,6 +11,8 @@ import { ledgerTransfer, ledgerAccountBalance } from "../ledger/ledger"
 import { getFeeAndAccount, generateTicket, ChainID } from "../route/route"
 import { GenerateTicketError } from "../route/declarations/icp_route/icp_route.did"
 import { stringToBigint, bigintToString, convertTransferError } from './rbot_utils'
+import { get } from "http"
+import { getTokenDecimalByTid, getTokenSymbolByTid } from "../../utils"
 
 
 if (process.env.NODE_ENV !== 'production') {
@@ -23,7 +25,6 @@ const ICP_SYMBOL = 'ICP'
 const ICP_DECIMALS = '8'
 const OMNITY_ROUTE_CANISTER_ID = process.env.OMNITY_ROUTE_CANISTER_ID || ""
 
-
 export type ResultWalletInfos = {
   principalId: string,
   accountId: string,
@@ -33,11 +34,11 @@ export type ResultWalletInfos = {
   }
 }
 
-export async function showWallet(userId: number, i18n: TFunction) : Promise<ResultWalletInfos> {
+export async function showWallet(tid: number, userId: number, i18n: TFunction) : Promise<ResultWalletInfos> {
   console.log('Show Wallet: ', userId)
   const principal: Principal = getUserIdentity(userId).getPrincipal()
   const accountId: AccountIdentifier = AccountIdentifier.fromPrincipal({ principal })
-  const balance = await getBalance(userId)
+  const balance = await getBalance(tid, userId)
   const balance_icp = await getBalanceICP(userId)
 
   return {
@@ -50,13 +51,25 @@ export async function showWallet(userId: number, i18n: TFunction) : Promise<Resu
   }
 }
 
-async function getBalance(userId: number): Promise<string> {
-  const token = await getTokenBySymbol(await createPool(), TOKEN_SYMBOL)
+async function getBalance(tid: number, userId: number): Promise<string> {
+
+  const token_symbol = getTokenSymbolByTid(tid)
+  console.log('Get Balance: ', {tid, token_symbol})
+  if (!token_symbol) {
+    return '0'
+  }
+
+  const decimal = getTokenDecimalByTid(tid)
+  if (!decimal) {
+    return '0'
+  }
+
+  const token = await getTokenBySymbol(await createPool(), token_symbol)
   console.log(' Get Token: ', token)
   let balance = '0'
   if (token) {
     const amount = await icrc1BalanceOf(token, userId)
-    balance = bigintToString(amount, parseInt(TOKEN_DECIMALS))
+    balance = bigintToString(amount, decimal)
   }
   return balance
 }
@@ -92,17 +105,24 @@ async function getBalanceICP(userId: number): Promise<string> {
  * /transfer ICP 100 kqwog-a4rvg-b7zzv-4skt7-fzosi-gtaub-xdkpi-4ywbu-mz23j-rfvoq-sqe
  * /transfer ICP 100 96427a419d7608353f7a1d0c5529218dbf695b803ddc4ddb1f78b654b06a0b35
  */
-export async function transferToken(userId: number, args: string[], i18n: TFunction): Promise<string> {
+export async function transferToken(tid: number, userId: number, args: string[], i18n: TFunction): Promise<string> {
+
+  const _decimal_by_tid = getTokenDecimalByTid(tid)
+  const _token_symbol = getTokenSymbolByTid(tid)
+  if(!_decimal_by_tid || !_token_symbol){
+    return i18n('msg_how_to_transfer')
+  }
+
   if (args.length !== 3 && args.length !== 2) {
     return i18n('msg_how_to_transfer')
   }
   if (args.length === 3 && args[0].toUpperCase() !== ICP_SYMBOL) {
     return i18n('msg_how_to_transfer')
   }
-  const _token = args.length === 2 ? TOKEN_SYMBOL : ICP_SYMBOL
+  const _token = args.length === 2 ? _token_symbol : ICP_SYMBOL
   const _amount = args.length === 2 ? args[0] : args[1]
   const _to = args.length === 2 ? args[1] : args[2]
-  const _decimal = args.length === 2 ? TOKEN_DECIMALS : ICP_DECIMALS
+  const _decimal = args.length === 2 ? _decimal_by_tid : parseInt(ICP_DECIMALS)
 
   let pattern = new RegExp('^(\\d+(?:\\.\\d{1,' + _decimal + '})?)$')
   const matches = _amount.match(pattern)
@@ -111,7 +131,7 @@ export async function transferToken(userId: number, args: string[], i18n: TFunct
     return i18n('msg_how_to_transfer')
   }
 
-  const amount = stringToBigint(_amount, parseInt(_decimal))
+  const amount = stringToBigint(_amount, _decimal)
   console.log('_token: ', {_token, amount} )
   const token = await getTokenBySymbol(await createPool(), _token)
   
@@ -211,7 +231,6 @@ export async function transferToken(userId: number, args: string[], i18n: TFunct
         return i18n('msg_how_to_transfer')
       }
     } else {
-      console.log('RUN 4 ')
       return i18n('msg_how_to_transfer')
     }
   }
