@@ -179,8 +179,13 @@ async function actionSlWallet(tid: number, uid: number): Promise<ResultWalletInf
   return await showWallet(tid, uid, getI18n())
 }
 
-async function actionSlCreate(tid: number, uid: number, args: string){
-  return await createRedEnvelope(tid, uid, args, getI18n())
+async function actionSlCreate(tid: number, uid: number, args: string): Promise<[string, object?, object?]>{
+  try{
+    return await createRedEnvelope(tid, uid, args, getI18n())
+  }catch(e){
+    console.log('error:', e)
+    return [(e as Error).message]
+  }
 }
 
 async function actionSlGrab(tid: number, uid: number, username: string, rid: string){
