@@ -14,22 +14,44 @@ CREATE TABLE rbot_settings (
   language text NOT NULL
 );
 
-CREATE TABLE re_status (
-  id bigint PRIMARY KEY,
-  rune text NOT NULL,
-  uid bigint NOT NULL,
-  amount text NOT NULL,
-  count int4 NOT NULL,
-  expire_at text NOT NULL,
-  fee_amount text NOT NULL,
-  is_sent bool DEFAULT FALSE,
-  is_revoked bool DEFAULT FALSE,
-  is_done bool DEFAULT FALSE,
-  receiver TEXT,
-  send_time TIMESTAMP,
-  create_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+-- CREATE TABLE re_status (
+--   id bigint PRIMARY KEY,
+--   rune text NOT NULL,
+--   uid bigint NOT NULL,
+--   amount text NOT NULL,
+--   count int4 NOT NULL,
+--   expire_at text NOT NULL,
+--   fee_amount text NOT NULL,
+--   is_sent bool DEFAULT FALSE,
+--   is_revoked bool DEFAULT FALSE,
+--   is_done bool DEFAULT FALSE,
+--   receiver TEXT,
+--   send_time TIMESTAMP,
+--   create_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+-- );
+-- CREATE INDEX re_status_send_time_idx ON public.re_status (send_time);
+
+CREATE TABLE re_status(
+    id bigint NOT NULL,
+    rune text NOT NULL,
+    uid bigint NOT NULL,
+    amount text NOT NULL,
+    count integer NOT NULL,
+    expire_at text NOT NULL,
+    fee_amount text NOT NULL,
+    is_sent boolean DEFAULT false,
+    is_revoked boolean DEFAULT false,
+    is_done boolean DEFAULT false,
+    receiver text,
+    send_time timestamp without time zone,
+    create_time timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    owner varchar(255),
+    token_id varchar(255),
+    is_random boolean,
+    memo text,
+    PRIMARY KEY(id)
 );
-CREATE INDEX re_status_send_time_idx ON public.re_status (send_time);
+CREATE INDEX re_status_send_time_idx ON re_status USING btree ("send_time");
 
 CREATE TABLE snatch_status (
   id bigint NOT NULL,

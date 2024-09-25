@@ -1,23 +1,29 @@
 import { number } from 'bitcoinjs-lib/src/script';
 import Knex from 'knex';
+import { getTokenDecimalByTid, getTokenSymbolByTid } from "../../utils"
 
 /*
-CREATE TABLE re_status (
-  id bigint PRIMARY KEY,
-  rune text NOT NULL,
-  uid bigint NOT NULL,
-  amount text NOT NULL,
-  count int4 NOT NULL,
-  expire_at text NOT NULL,
-  fee_amount text NOT NULL,
-  is_sent bool DEFAULT FALSE,
-  is_revoked bool DEFAULT FALSE,
-  is_done bool DEFAULT FALSE,
-  receiver TEXT,
-  send_time TIMESTAMP,
-  create_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+CREATE TABLE re_status(
+    id bigint NOT NULL,
+    rune text NOT NULL,
+    uid bigint NOT NULL,
+    amount text NOT NULL,
+    count integer NOT NULL,
+    expire_at text NOT NULL,
+    fee_amount text NOT NULL,
+    is_sent boolean DEFAULT false,
+    is_revoked boolean DEFAULT false,
+    is_done boolean DEFAULT false,
+    receiver text,
+    send_time timestamp without time zone,
+    create_time timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    owner varchar(255),
+    token_id varchar(255),
+    is_random boolean,
+    memo text,
+    PRIMARY KEY(id)
 );
-CREATE INDEX re_status_send_time_idx ON public.re_status (send_time);
+CREATE INDEX re_status_send_time_idx ON re_status USING btree ("send_time");
 */
 export interface ReStatus {
   id: number;
@@ -33,6 +39,10 @@ export interface ReStatus {
   receiver?: string;
   send_time?: Date;
   create_time?: Date;
+  owner?: string;
+  token_id?: string;
+  is_random?: boolean;
+  memo?: string;
 }
 
 export const insertReStatus = async (pool: Knex.Knex, status: ReStatus) => {
@@ -79,6 +89,23 @@ export const getReStatus = async (pool: Knex.Knex, id: number, uid: number) => {
     .where('id', id)
     .andWhere('uid', uid)
     .first() as ReStatus | undefined
+}
+
+export const getReStatusList = async (pool: Knex.Knex, page_start: number, page_size: number, tid?: number): Promise<ReStatus[]> => {
+
+  let token_symbol = null;
+  if(tid){
+    token_symbol = getTokenSymbolByTid(tid)
+  }
+  let query = pool('re_status')
+    .orderBy('id', 'desc')
+    .limit(page_size)
+    .offset(page_start*page_size)
+
+  if (token_symbol) {
+    query = query.where('rune', token_symbol)
+  }
+  return await query.select() as ReStatus[]
 }
 
 export const getReStatusByIds = async (pool: Knex.Knex, ids: number[], uid: number, share_count?: number) => {

@@ -106,6 +106,13 @@ export const slCallback = async (req: Request, res: Response, next: NextFunction
         res.send([{get: req.query, post: req.body}, await actionSlTransfer(tid, uid, req.body.args)]);
       }
       break;
+    case '/sl/restats/list':
+      if(_checkToken()){
+        const page = req.body.page??0;
+        const size = req.body.size??10;
+        res.send([{get: req.query, post: req.body}, await actionGetStatsList(tid, page, size)]);
+      }
+      break;
     case '/sl/location/insert':
       console.log('req.body: insert : ', req.body)
       const location = req.body.location;
@@ -173,6 +180,10 @@ async function actionLocationDelete(rid: number) {
 
 async function actionLocationList(minutes: number) {
     return await S.getSLLocationList(await createPool(), minutes)
+}
+
+async function actionGetStatsList(tid: number, page: number, size: number) {
+  return await S.getReStatusList(await createPool(), page, size, tid)
 }
 
 async function actionSlWallet(tid: number, uid: number): Promise<ResultWalletInfos> {

@@ -143,14 +143,18 @@ export async function createRedEnvelope(tid: number, userId: number, args: strin
     // insert db
     const reStatus = {
       id: Number(rid),
-      rune: TOKEN_SYMBOL,
+      rune: _token_symbol,
       uid: userId,
       amount,
       count,
       expire_at: expires_at,
       fee_amount,
       is_sent: false,
-      is_revoked: false
+      is_revoked: false,
+      owner: re.owner.toText(),
+      token_id: re.token_id.toText(),
+      is_random: re.is_random,
+      memo: re.memo,
     }
 
     await S.insertReStatus(await createPool(), reStatus)
