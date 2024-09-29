@@ -43,6 +43,16 @@ export interface ReStatus {
   token_id?: string;
   is_random?: boolean;
   memo?: string;
+  snatch_list?: ReStatusList;
+}
+
+export interface ReStatusList {
+  id: number;
+  uid: number;
+  code: number;
+  amount: string;
+  discard: number;
+  create_time: Date;
 }
 
 export const insertReStatus = async (pool: Knex.Knex, status: ReStatus) => {
@@ -91,22 +101,47 @@ export const getReStatus = async (pool: Knex.Knex, id: number, uid: number) => {
     .first() as ReStatus | undefined
 }
 
+// export const getReStatusList = async (pool: Knex.Knex, page_start: number, page_size: number, tid?: number): Promise<ReStatus[]> => {
+
+//   let token_symbol = null;
+//   if(tid){
+//     token_symbol = getTokenSymbolByTid(tid)
+//   }
+//   let query = pool('re_status')
+//     .orderBy('id', 'desc')
+//     .limit(page_size)
+//     .offset(page_start*page_size)
+
+//   if (token_symbol) {
+//     query = query.where('rune', token_symbol)
+//   }
+//   return await query.select() as ReStatus[]
+// }
+
 export const getReStatusList = async (pool: Knex.Knex, page_start: number, page_size: number, tid?: number): Promise<ReStatus[]> => {
 
   let token_symbol = null;
-  if(tid){
-    token_symbol = getTokenSymbolByTid(tid)
+  if (tid) {
+    token_symbol = getTokenSymbolByTid(tid);
   }
-  let query = pool('re_status')
-    .orderBy('id', 'desc')
+
+  let query = pool('re_status as r')
+    .leftJoin('snatch_status as s', function () {
+      this.on('s.id', '=', 'r.id').andOn('s.code', '=', pool.raw('?', [0]));
+    })
+    .orderBy('r.id', 'desc')
     .limit(page_size)
-    .offset(page_start*page_size)
+    .offset(page_start * page_size)
+    .select('r.*', pool.raw('json_agg(s.*) as snatch_list')) // 聚合 snatch_status 数据作为 snatch_list 字段
+    .groupBy('r.id'); // 按照 re_status 的 id 分组
 
   if (token_symbol) {
-    query = query.where('rune', token_symbol)
+    query = query.where('r.rune', token_symbol);
   }
-  return await query.select() as ReStatus[]
-}
+
+  return await query as ReStatus[];
+};
+
 
 export const getReStatusByIds = async (pool: Knex.Knex, ids: number[], uid: number, share_count?: number) => {
   
