@@ -200,7 +200,12 @@ async function actionSlCreate(tid: number, uid: number, args: string): Promise<[
 }
 
 async function actionSlGrab(tid: number, uid: number, username: string, rid: string){
-  return {res: await grabRedEnvelope(tid, uid, username, [rid], getI18n()), username}
+  try{
+    return {res: await grabRedEnvelope(tid, uid, username, [rid], getI18n()), username}
+  }catch(e){
+    console.log('error:', e)
+    return {res: (e as Error).message}
+  }
 }
 
 async function actionSlList(uid: number, args: string, share_count?: number){
@@ -208,9 +213,13 @@ async function actionSlList(uid: number, args: string, share_count?: number){
 }
 
 async function actionSlGetRe(args: string){
-  const res = await getRedEnvelope( [args], getI18n())
-  console.log('res:', res)
-  return res
+  try{
+    const res = await getRedEnvelope( [args], getI18n())
+    return res
+  }catch(e){
+    console.log('error:', e)
+    return (e as Error).message
+  }
 }
 
 async function checkIsAgent(): Promise<boolean> {
