@@ -31,7 +31,8 @@ export type ResultWalletInfos = {
   balance: {
     ICP_SYMBOL: string,
     TOKEN_SYMBOL: string,
-  }
+  },
+  token: any[],
 }
 
 export async function showWallet(tid: number, userId: number, i18n: TFunction) : Promise<ResultWalletInfos> {
@@ -47,7 +48,8 @@ export async function showWallet(tid: number, userId: number, i18n: TFunction) :
     'balance': {
       ICP_SYMBOL: balance_icp, 
       TOKEN_SYMBOL: balance,
-    }
+    },
+    'token': [getTokenSymbolByTid(tid)??'', getTokenDecimalByTid(tid)??0]
   }
 }
 
