@@ -275,7 +275,7 @@ export async function grabRedEnvelope(tid: number, userId: number, username: str
   // snatch re
   const serviceActor = await getAgentActor()
   const ret = await serviceActor.open_red_envelope2(BigInt(args[0]), userPrincipal)
-  console.log('grabRedEnvelope', ret)
+  console.log('grabRedEnvelope', {ret, _decimal})
   if ('Err' in ret) {
     // update snatch status
     await S.updateSnatchStatus(pool, { id: rid, uid: userId, code: Number(ret['Err'][0]), amount: 0n, discard: 0 })
