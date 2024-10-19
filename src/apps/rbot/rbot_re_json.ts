@@ -212,7 +212,7 @@ export async function sendRedEnvelope(userId: number, args: string[], i18n: TFun
   }
 }
 
-export async function getRedEnvelope(args: string[], i18n: TFunction): Promise<object> {
+export async function getRedEnvelope(tid: number, args: string[], i18n: TFunction): Promise<object> {
   if (args.length !== 1) {
     return [i18n('msg_how_to_send')]
   }
@@ -221,6 +221,7 @@ export async function getRedEnvelope(args: string[], i18n: TFunction): Promise<o
   } catch (error) {
     return [i18n('msg_how_to_send')]
   }
+  const _decimal = getTokenDecimalByTid(tid)??parseInt(TOKEN_DECIMALS)
   const serviceActor = await getAgentActor()
   const ret = await serviceActor.get_red_envelope2(BigInt(args[0]))
   console.log('getRedEnvelope', ret)
@@ -235,19 +236,19 @@ export async function getRedEnvelope(args: string[], i18n: TFunction): Promise<o
     participants: base_ret.participants.map((item: any) => {
       const returnItem = {
         principal: item[0].toText(),
-        nat: bigintToString(item[1], parseInt(TOKEN_DECIMALS)),
+        nat: bigintToString(item[1], _decimal),
       }
       return returnItem
     }),
-    amount: bigintToString(base_ret.amount, parseInt(TOKEN_DECIMALS)),
+    amount: bigintToString(base_ret.amount, _decimal),
     token_id: base_ret.token_id.toText(),
     owner: base_ret.owner.toText(),
     expires_at:[],
     expand: {
-      grab_amount: bigintToString(expand_ret.grab_amount, parseInt(TOKEN_DECIMALS)),
+      grab_amount: bigintToString(expand_ret.grab_amount, _decimal),
       all_num: expand_ret.all_num,
-      unreceived_amount: bigintToString(expand_ret.unreceived_amount, parseInt(TOKEN_DECIMALS)),
-      all_amount: bigintToString(expand_ret.all_amount, parseInt(TOKEN_DECIMALS)),
+      unreceived_amount: bigintToString(expand_ret.unreceived_amount, _decimal),
+      all_amount: bigintToString(expand_ret.all_amount, _decimal),
       participants_num: expand_ret.participants_num,
     }
   }
