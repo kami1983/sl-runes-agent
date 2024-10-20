@@ -160,7 +160,10 @@ export const getReStatusList = async (pool: Knex.Knex, page_start: number, page_
     if (item_token_id != null) {
       const item_tid = getTidByCanisterId(item_token_id);
       if(item_tid != null) {
-        result_item.friendly_amount = bigintToString(item.amount, item_tid);
+        const item_decimal = getTokenDecimalByTid(item_tid);
+        if(item_decimal != null) {
+          result_item.friendly_amount = bigintToString(item.amount, item_decimal);
+        }
       }
     }
     
