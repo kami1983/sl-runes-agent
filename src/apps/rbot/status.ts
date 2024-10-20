@@ -1,6 +1,6 @@
 import { number } from 'bitcoinjs-lib/src/script';
 import Knex from 'knex';
-import { getTokenDecimalByTid, getTokenSymbolByTid, getTokenTidBySymbol } from "../../utils"
+import { getTidByCanisterId, getTokenDecimalByTid, getTokenSymbolByTid, getTokenTidBySymbol } from "../../utils"
 import { bigintToString } from './rbot_utils';
 import { stat } from 'fs';
 
@@ -152,16 +152,18 @@ export const getReStatusList = async (pool: Knex.Knex, page_start: number, page_
   // It helps programmers to read the data firendly.
   for (let i = 0; i < status_list.length; i++) {
     const item = status_list[i];
-    const item_token_symbol = item.rune;
-    const item_tid = getTokenTidBySymbol(item_token_symbol);
+    const item_token_id = item.token_id;
     const result_item: ExpendReStatus = {
       ...item,
       friendly_amount: null,
     };
-
-    if(item_tid != null) {
-      result_item.friendly_amount = bigintToString(item.amount, item_tid);
+    if (item_token_id != null) {
+      const item_tid = getTidByCanisterId(item_token_id);
+      if(item_tid != null) {
+        result_item.friendly_amount = bigintToString(item.amount, item_tid);
+      }
     }
+    
     result.push(result_item);
   }
 
