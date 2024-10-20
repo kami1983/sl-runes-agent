@@ -1,6 +1,8 @@
 import { number } from 'bitcoinjs-lib/src/script';
 import Knex from 'knex';
-import { getTokenDecimalByTid, getTokenSymbolByTid } from "../../utils"
+import { getTokenDecimalByTid, getTokenSymbolByTid, getTokenTidBySymbol } from "../../utils"
+import { bigintToString } from './rbot_utils';
+import { stat } from 'fs';
 
 /*
 CREATE TABLE re_status(
@@ -44,6 +46,10 @@ export interface ReStatus {
   is_random?: boolean;
   memo?: string;
   snatch_list?: ReStatusList;
+}
+
+export interface ExpendReStatus extends ReStatus {
+  friendly_amount: string|null;
 }
 
 export interface ReStatusList {
@@ -118,7 +124,7 @@ export const getReStatus = async (pool: Knex.Knex, id: number, uid: number) => {
 //   return await query.select() as ReStatus[]
 // }
 
-export const getReStatusList = async (pool: Knex.Knex, page_start: number, page_size: number, tid?: number): Promise<ReStatus[]> => {
+export const getReStatusList = async (pool: Knex.Knex, page_start: number, page_size: number, tid?: number): Promise<ExpendReStatus[]> => {
 
   let token_symbol = null;
   if (tid) {
@@ -139,7 +145,27 @@ export const getReStatusList = async (pool: Knex.Knex, page_start: number, page_
     query = query.where('r.rune', token_symbol);
   }
 
-  return await query as ReStatus[];
+  const status_list = await query as ReStatus[];
+  const result: ExpendReStatus[] = [];
+  // Loop through the data, the value of the field "rune" can be either ckBTC or ckUSDC, 
+  // it needs to be converted into the corresponding tid, and then convert the "friendly_amount" field into its corresponding value.
+  // It helps programmers to read the data firendly.
+  for (let i = 0; i < status_list.length; i++) {
+    const item = status_list[i];
+    const item_token_symbol = item.rune;
+    const item_tid = getTokenTidBySymbol(item_token_symbol);
+    const result_item: ExpendReStatus = {
+      ...item,
+      friendly_amount: null,
+    };
+
+    if(item_tid != null) {
+      result_item.friendly_amount = bigintToString(item.amount, item_tid);
+    }
+    result.push(result_item);
+  }
+
+  return result;
 };
 
 

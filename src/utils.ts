@@ -21,6 +21,7 @@ export const makeAgent = async (options?: HttpAgentOptions) => {
 
 const RBOT_TOKEN_SYMBOL_MAP: string[] = process.env.RBOT_TOKEN_SYMBOL_MAP?.split(',') || []
 const RBOT_TOKEN_DECIMALS_MAP: number[] = process.env.RBOT_TOKEN_DECIMALS_MAP?.split(',').map(Number) || []
+const RBOT_CANISTER_ID_MAP: string[] = process.env.RBOT_CANISTER_ID_MAP?.split(',') || []
 
 export function getTokenSymbolByTid(tid: number): string | null {
   if (tid < RBOT_TOKEN_SYMBOL_MAP.length) {
@@ -35,3 +36,22 @@ export function getTokenDecimalByTid(tid: number): number | null {
   }
   return null
 }
+
+export function getTokenTidBySymbol(symbol: string): number | null {
+  return RBOT_TOKEN_SYMBOL_MAP.indexOf(symbol)
+}
+
+export function getCanisterIdBySymbol(symbol: string): string | null {
+  if (RBOT_TOKEN_SYMBOL_MAP.includes(symbol)) {
+    return RBOT_CANISTER_ID_MAP[RBOT_TOKEN_SYMBOL_MAP.indexOf(symbol)]
+  }
+  return null
+}
+
+export function getTidByCanisterId(canisterId: string): number | null {
+  if (RBOT_CANISTER_ID_MAP.includes(canisterId)) {
+    return RBOT_CANISTER_ID_MAP.indexOf(canisterId)
+  }
+  return null
+}
+

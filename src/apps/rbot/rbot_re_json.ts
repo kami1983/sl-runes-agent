@@ -6,7 +6,7 @@ import { TFunction } from "i18next"
 import { join } from "path"
 import sharp from 'sharp'
 
-import { getTokenDecimalByTid, getTokenSymbolByTid, makeAgent } from '../../utils'
+import { getTidByCanisterId, getTokenDecimalByTid, getTokenSymbolByTid, makeAgent } from '../../utils'
 import { getAgentIdentity, getUserIdentity } from '../../identity'
 import { createPool, getTokenBySymbol, getTokenBycanister } from '../../tokens'
 import { icrc1BalanceOf, icrc1Transfer, icrc1Fee } from "../ledger/icrc1"
@@ -15,6 +15,7 @@ import { RedEnvelope } from "./declarations/rbot_backend/rbot_backend.did"
 import { _SERVICE } from "./declarations/rbot_backend/rbot_backend.did"
 import { stringToBigint, bigintToString } from './rbot_utils'
 import * as S from "./status"
+import { get } from "http"
 
 
 const RBOT_CANISTER_ID = process.env.RBOT_CANISTER_ID || ""
@@ -228,6 +229,7 @@ export async function getRedEnvelope(tid: number, args: string[], i18n: TFunctio
   if(ret.length === 0){
     return {}
   }
+
   const base_ret = ret[0][0]
   const expand_ret = ret[0][1]
   return {
@@ -242,6 +244,7 @@ export async function getRedEnvelope(tid: number, args: string[], i18n: TFunctio
     }),
     amount: bigintToString(base_ret.amount, _decimal),
     token_id: base_ret.token_id.toText(),
+    token_symbol: getTokenSymbolByTid(getTidByCanisterId(base_ret.token_id.toText())??tid),
     owner: base_ret.owner.toText(),
     expires_at:[],
     expand: {
