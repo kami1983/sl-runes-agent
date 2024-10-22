@@ -198,6 +198,13 @@ export const getReStatusList = async (pool: Knex.Knex, page_start: number, page_
       if(item.snatch_list == null) {
         item.snatch_list = []
       }
+      // Remove null values from snatch_list
+      for (let idx=0; idx<item.snatch_list.length; idx++) {
+        if(item.snatch_list[idx] == null) {
+          item.snatch_list.splice(idx, 1)
+        }
+      }
+
       console.log('item - snatch_list: ', item.snatch_list)
       let value = []
       for (const key of keys) {
