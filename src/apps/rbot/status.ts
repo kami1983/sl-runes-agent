@@ -3,6 +3,7 @@ import Knex from 'knex';
 import { getTidByCanisterId, getTokenDecimalByTid, getTokenSymbolByTid, getTokenTidBySymbol } from "../../utils"
 import { bigintToString } from './rbot_utils';
 import { stat } from 'fs';
+import { Principal } from '@dfinity/principal';
 
 /*
 CREATE TABLE re_status(
@@ -124,10 +125,10 @@ export const getReStatus = async (pool: Knex.Knex, id: number, uid: number) => {
 //   return await query.select() as ReStatus[]
 // }
 
-export const getReStatusList = async (pool: Knex.Knex, page_start: number, page_size: number, tid?: number): Promise<[string[], any[]]> => {
+export const getReStatusList = async (pool: Knex.Knex, page_start: number, page_size: number, tid: number, owner?: Principal): Promise<[string[], any[]]> => {
 
   let token_symbol = null;
-  if (tid) {
+  if (tid>0) {
     token_symbol = getTokenSymbolByTid(tid);
   }
 
@@ -143,6 +144,9 @@ export const getReStatusList = async (pool: Knex.Knex, page_start: number, page_
 
   if (token_symbol) {
     query = query.where('r.rune', token_symbol);
+  }
+  if(owner) {
+    query = query.where('r.owner', owner.toText());
   }
 
   const status_list = await query as ReStatus[];
@@ -205,7 +209,6 @@ export const getReStatusList = async (pool: Knex.Knex, page_start: number, page_
         }
       }
 
-      console.log('item - snatch_list: ', item.snatch_list)
       let value = []
       for (const key of keys) {
         value.push(item[key as keyof ExpendReStatus])
