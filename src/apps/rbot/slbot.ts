@@ -187,6 +187,7 @@ async function actionLocationList(minutes: number) {
 }
 
 async function actionGetStatsList(tid: number, page: number, size: number, owner: Principal | null) {
+  console.log('Debug. actionGetStatsList',  owner?.toText())
   return await S.getReStatusList(await createPool(), page, size, tid, owner)
 }
 

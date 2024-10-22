@@ -146,6 +146,7 @@ export const getReStatusList = async (pool: Knex.Knex, page_start: number, page_
     query = query.where('r.rune', token_symbol);
   }
   if(owner) {
+    console.log('RUN 1 ')
     query = query.where('r.owner', owner.toText());
   }
 
