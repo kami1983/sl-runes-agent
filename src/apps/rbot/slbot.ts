@@ -32,10 +32,6 @@ const RE_START_PICTURE = 'https://storage.googleapis.com/socialfi-agent/rebot/sn
 const RE_SNATCH_PICTURE = 'https://storage.googleapis.com/socialfi-agent/rebot/snatch.jpg'
 
 
-import { Client } from 'pg';
-import { Principal } from "@dfinity/candid/lib/cjs/idl";
-
-
 const i18nTF = i18next.getFixedT('en')
 function getI18n(): TFunction {
   return i18nTF
