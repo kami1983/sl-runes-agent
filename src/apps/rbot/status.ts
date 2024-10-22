@@ -125,7 +125,7 @@ export const getReStatus = async (pool: Knex.Knex, id: number, uid: number) => {
 //   return await query.select() as ReStatus[]
 // }
 
-export const getReStatusList = async (pool: Knex.Knex, page_start: number, page_size: number, tid: number, owner?: Principal): Promise<[string[], any[]]> => {
+export const getReStatusList = async (pool: Knex.Knex, page_start: number, page_size: number, tid: number, owner: Principal | null): Promise<[string[], any[]]> => {
 
   let token_symbol = null;
   if (tid>0) {
