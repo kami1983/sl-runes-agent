@@ -51,6 +51,8 @@ CREATE TABLE re_status(
     memo text,
     PRIMARY KEY(id)
 );
+
+
 CREATE INDEX re_status_send_time_idx ON re_status USING btree ("send_time");
 
 CREATE TABLE snatch_status (
@@ -58,10 +60,12 @@ CREATE TABLE snatch_status (
   uid bigint NOT NULL,
   code int8 DEFAULT -1 NOT NULL,
   amount text NOT NULL,
+  recipient text,
   discard int8 DEFAULT 0 NOT NULL,
   create_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT unique_id_uid UNIQUE (id, uid)
 );
+
 CREATE INDEX snatch_status_create_time_idx ON public.snatch_status (create_time);
 
 CREATE TABLE wallets (

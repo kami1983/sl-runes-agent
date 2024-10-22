@@ -108,21 +108,9 @@ export const getReStatus = async (pool: Knex.Knex, id: number, uid: number) => {
     .first() as ReStatus | undefined
 }
 
-// export const getReStatusList = async (pool: Knex.Knex, page_start: number, page_size: number, tid?: number): Promise<ReStatus[]> => {
-
-//   let token_symbol = null;
-//   if(tid){
-//     token_symbol = getTokenSymbolByTid(tid)
-//   }
-//   let query = pool('re_status')
-//     .orderBy('id', 'desc')
-//     .limit(page_size)
-//     .offset(page_start*page_size)
-
-//   if (token_symbol) {
-//     query = query.where('rune', token_symbol)
-//   }
-//   return await query.select() as ReStatus[]
+// export const getReStatusListSnatchUser = async (pool: Knex.Knex, page_start: number, page_size: number, tid?: number): Promise<[string[], any[]]> => {
+//   // TODO::// 同样联合查询 re_status，snatch_status 表
+  
 // }
 
 export const getReStatusList = async (pool: Knex.Knex, page_start: number, page_size: number, tid: number, owner: Principal | null): Promise<[string[], any[]]> => {
@@ -284,6 +272,7 @@ export interface SnatchStatus {
   code: number;
   amount: bigint;
   discard: number;
+  recipient: string;
   create_time?: Date;
 }
 

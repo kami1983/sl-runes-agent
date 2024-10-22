@@ -185,13 +185,13 @@ export async function grabRedEnvelope(userId: number, username: string, args: st
   await S.insertWallet(pool, wallet)
 
   // insert snatch status
-  await S.insertSnatchStatus(pool, { id: rid, uid: userId, code: -1, amount: 0n, discard: 0 })
+  await S.insertSnatchStatus(pool, { id: rid, uid: userId, code: -1, amount: 0n, discard: 0, recipient: userPrincipal.toText() })
   // snatch re
   const serviceActor = await getAgentActor()
   const ret = await serviceActor.open_red_envelope(BigInt(args[0]), userPrincipal)
   if ('Err' in ret) {
     // update snatch status
-    await S.updateSnatchStatus(pool, { id: rid, uid: userId, code: Number(ret['Err'][0]), amount: 0n, discard: 0 })
+    await S.updateSnatchStatus(pool, { id: rid, uid: userId, code: Number(ret['Err'][0]), amount: 0n, discard: 0, recipient: userPrincipal.toText()})
     const code = `reapp_error_${ret['Err'][0].toString()}`
     if (errorWithRedEnvelopeId(code)) {
       return [code, username + ' ' + i18n(code, { id: args[0] })]
@@ -200,7 +200,7 @@ export async function grabRedEnvelope(userId: number, username: string, args: st
     }
   } else {
     // update snatch status
-    await S.updateSnatchStatus(pool, { id: rid, uid: userId, code: 0, amount: ret['Ok'], discard: 0 })
+    await S.updateSnatchStatus(pool, { id: rid, uid: userId, code: 0, amount: ret['Ok'], discard: 0, recipient: userPrincipal.toText() })
     // amount 8888 -> 88.88
     const amount = bigintToString(ret['Ok'], parseInt(TOKEN_DECIMALS))
     let msg = i18n('msg_snatch', { username, amount, id: args[0] })
