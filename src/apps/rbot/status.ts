@@ -124,7 +124,7 @@ export const getReStatus = async (pool: Knex.Knex, id: number, uid: number) => {
 //   return await query.select() as ReStatus[]
 // }
 
-export const getReStatusList = async (pool: Knex.Knex, page_start: number, page_size: number, tid?: number): Promise<ExpendReStatus[]> => {
+export const getReStatusList = async (pool: Knex.Knex, page_start: number, page_size: number, tid?: number): Promise<[string[], any[]]> => {
 
   let token_symbol = null;
   if (tid) {
@@ -170,7 +170,40 @@ export const getReStatusList = async (pool: Knex.Knex, page_start: number, page_
     result.push(result_item);
   }
 
-  return result;
+    const keys = [
+      'id', 
+      'rune', 
+      'uid', 
+      'amount', 
+      'count', 
+      'expire_at', 
+      'fee_amount', 
+      'is_sent', 
+      'is_revoked', 
+      'is_done',
+      'receiver', 
+      'send_time',
+       'create_time', 
+       'owner', 
+       'token_id', 
+       'is_random', 
+       'memo', 
+       'snatch_list', 
+       'friendly_amount'
+    ]
+    const values = []
+    // while loop through the result, put the value of each object into values according to the order of keys
+    for (const idx in result) {
+      const item = result[idx]
+      let value = []
+      for (const key of keys) {
+        value.push(item[key as keyof ExpendReStatus])
+      }
+      values.push(value)
+    }
+
+
+  return [keys, values] as [string[], any[]];
 };
 
 

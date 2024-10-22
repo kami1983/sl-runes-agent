@@ -98,7 +98,7 @@ export const slCallback = async (req: Request, res: Response, next: NextFunction
       break;
     case '/sl/get':
       if(_checkToken()){
-        res.send([{get: req.query, post: req.body}, await actionSlGetRe(tid, req.body.args)]);
+        res.send([{get: req.query, post: req.body}, await actionSlGetRe(req.body.args)]);
       }
       break;
     case '/sl/transfer':
@@ -212,9 +212,9 @@ async function actionSlList(uid: number, args: string, share_count?: number){
   return await listRedEnvelope(uid, [args], getI18n(), share_count)
 }
 
-async function actionSlGetRe(tid: number, args: string){
+async function actionSlGetRe( args: string){
   try{
-    const res = await getRedEnvelope(tid, [args], getI18n())
+    const res = await getRedEnvelope([args], getI18n())
     return res
   }catch(e){
     console.log('error:', e)

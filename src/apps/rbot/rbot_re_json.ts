@@ -213,7 +213,7 @@ export async function sendRedEnvelope(userId: number, args: string[], i18n: TFun
   }
 }
 
-export async function getRedEnvelope(tid: number, args: string[], i18n: TFunction): Promise<object> {
+export async function getRedEnvelope( args: string[], i18n: TFunction): Promise<object> {
   if (args.length !== 1) {
     return [i18n('msg_how_to_send')]
   }
@@ -222,7 +222,7 @@ export async function getRedEnvelope(tid: number, args: string[], i18n: TFunctio
   } catch (error) {
     return [i18n('msg_how_to_send')]
   }
-  const _decimal = getTokenDecimalByTid(tid)??parseInt(TOKEN_DECIMALS)
+  
   const serviceActor = await getAgentActor()
   const ret = await serviceActor.get_red_envelope2(BigInt(args[0]))
   console.log('getRedEnvelope', ret)
@@ -232,6 +232,16 @@ export async function getRedEnvelope(tid: number, args: string[], i18n: TFunctio
 
   const base_ret = ret[0][0]
   const expand_ret = ret[0][1]
+  const token_id = base_ret.token_id.toText()
+  const tid = getTidByCanisterId(token_id)
+  if(tid == null){
+    return [i18n('msg_tid_not_found')]
+  }
+  const _decimal = getTokenDecimalByTid(tid)
+  if(_decimal == null){
+    return [i18n('msg_decimal_not_found')]
+  }
+
   return {
     rid: args[0],
     ...base_ret,

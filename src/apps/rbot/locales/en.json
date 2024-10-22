@@ -38,6 +38,9 @@
 		"msg_preswap_notice": "Execute /swap quickly if the price is good because it keeps changing. Swap here is only for casual usage. For serious trading, please visit https://www.helixmarkets.io/ or https://iclight.io/",
 		"msg_swap_failed": "Swap failed. {{error}}",
 
+		"msg_tid_not_found": "tid ot found",
+		"msg_decimal_not_found": "Decimal not found",
+
 		"btn_create_re": "Create RE",
 		"btn_send_re": "Send RE",
 		"btn_my_re": "My RE",
