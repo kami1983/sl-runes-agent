@@ -198,6 +198,7 @@ export const getReStatusList = async (pool: Knex.Knex, page_start: number, page_
       if(item.snatch_list == null) {
         item.snatch_list = []
       }
+      console.log('item - snatch_list: ', item.snatch_list)
       let value = []
       for (const key of keys) {
         value.push(item[key as keyof ExpendReStatus])
