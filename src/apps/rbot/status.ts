@@ -45,7 +45,7 @@ export interface ReStatus {
   token_id?: string;
   is_random?: boolean;
   memo?: string;
-  snatch_list?: ReStatusList;
+  snatch_list?: ReStatusList[];
 }
 
 export interface ExpendReStatus extends ReStatus {
@@ -195,6 +195,9 @@ export const getReStatusList = async (pool: Knex.Knex, page_start: number, page_
     // while loop through the result, put the value of each object into values according to the order of keys
     for (const idx in result) {
       const item = result[idx]
+      if(item.snatch_list == null) {
+        item.snatch_list = []
+      }
       let value = []
       for (const key of keys) {
         value.push(item[key as keyof ExpendReStatus])
