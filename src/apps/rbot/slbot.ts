@@ -117,6 +117,19 @@ export const slCallback = async (req: Request, res: Response, next: NextFunction
         res.send([{get: req.query, post: req.body}, await actionGetStatsList(tid, page, size, owner)]);
       }
       break;
+    case '/sl/restats/buy/list':
+      if(_checkToken()){
+        const page = req.body.page??0;
+        const size = req.body.size??10;
+        let recipient = req.body.recipient;
+        if(recipient != undefined){
+          recipient = Principal.fromText(recipient)
+        }else{
+          recipient = null;
+        }
+        res.send([{get: req.query, post: req.body}, await actionGetStatsListByRecipient(tid, page, size, recipient)]);
+      }
+      break;
     case '/sl/location/insert':
       console.log('req.body: insert : ', req.body)
       const location = req.body.location;
@@ -187,8 +200,11 @@ async function actionLocationList(minutes: number) {
 }
 
 async function actionGetStatsList(tid: number, page: number, size: number, owner: Principal | null) {
-  console.log('Debug. actionGetStatsList',  owner?.toText())
   return await S.getReStatusList(await createPool(), page, size, tid, owner)
+}
+
+async function actionGetStatsListByRecipient(tid: number, page: number, size: number, recipient: Principal) {
+  return await S.getReStatusListByRecipient(await createPool(), page, size, tid, recipient)
 }
 
 async function actionSlWallet(tid: number, uid: number): Promise<ResultWalletInfos> {

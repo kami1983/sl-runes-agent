@@ -108,10 +108,41 @@ export const getReStatus = async (pool: Knex.Knex, id: number, uid: number) => {
     .first() as ReStatus | undefined
 }
 
-// export const getReStatusListSnatchUser = async (pool: Knex.Knex, page_start: number, page_size: number, tid?: number): Promise<[string[], any[]]> => {
-//   // TODO::// 同样联合查询 re_status，snatch_status 表
-  
-// }
+export const getReStatusListByRecipient = async (pool: Knex.Knex, page_start: number, page_size: number, tid: number, recipient: Principal): Promise<[string[], any[]]> => {
+  // TODO::// 同样联合查询 snatch_status, re_status 表 检索 re_status，snatch_status.recipient=recipient
+  // snatch_status.id = re_status.id 
+
+  console.log('getReStatusListByRecipient params: ', {page_start, page_size, tid, recipient})
+  // 联合查询 snatch_status 和 re_status，拼接到一起
+  let query = pool('snatch_status as s')
+    .leftJoin('re_status as r', function () {
+      this.on('r.id', '=', 's.id')
+    })
+    .where('s.recipient', recipient.toText())
+    .orderBy('s.id', 'desc')
+    .limit(page_size)
+    .offset(page_start * page_size)
+    .select('s.*', 'r.*');
+
+    const status_list = await query;
+    console.log('status_list: ', status_list)
+
+    const keys = [
+      "id", "uid", "code", "amount", "discard", "create_time", 
+      "recipient", "rune", "count", "expire_at", "fee_amount", 
+      "is_sent", "is_revoked", "is_done", "receiver", "send_time", "owner", "token_id", "is_random", "memo"
+    ]
+    const values = []
+    for (const idx in status_list) {
+      const item = status_list[idx]
+      let value = []
+      for (const key of keys) {
+        value.push(item[key])
+      }
+      values.push(value)
+    }
+    return [keys, values] as [string[], any[]];
+}
 
 export const getReStatusList = async (pool: Knex.Knex, page_start: number, page_size: number, tid: number, owner: Principal | null): Promise<[string[], any[]]> => {
 
@@ -134,7 +165,6 @@ export const getReStatusList = async (pool: Knex.Knex, page_start: number, page_
     query = query.where('r.rune', token_symbol);
   }
   if(owner) {
-    console.log('RUN 1 ')
     query = query.where('r.owner', owner.toText());
   }
 
