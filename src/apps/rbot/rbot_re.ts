@@ -118,7 +118,7 @@ export async function createRedEnvelope(userId: number, args: string, i18n: TFun
       uid: userId,
       amount,
       count,
-      expire_at: expires_at,
+      expire_at: Number(expires_at),
       fee_amount,
       is_sent: false,
       is_revoked: false
