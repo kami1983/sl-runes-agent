@@ -41,6 +41,7 @@ export const idlFactory = ({ IDL }) => {
     'all_num' : IDL.Nat16,
     'grab_amount' : IDL.Nat,
     'unreceived_amount' : IDL.Nat,
+    'expires_at' : IDL.Opt(IDL.Nat64),
   });
   const Result_3 = IDL.Variant({
     'Ok' : GrabRedEnvelopeResult,
@@ -94,6 +95,11 @@ export const idlFactory = ({ IDL }) => {
     'is_token_in_white_list' : IDL.Func([IDL.Principal], [IDL.Bool], ['query']),
     'open_red_envelope' : IDL.Func([IDL.Nat, IDL.Principal], [Result_1], []),
     'open_red_envelope2' : IDL.Func([IDL.Nat, IDL.Principal], [Result_3], []),
+    'open_red_envelope3' : IDL.Func(
+        [IDL.Nat, IDL.Principal, IDL.Text, IDL.Text],
+        [Result_3],
+        [],
+      ),
     'remove_token_from_white_list' : IDL.Func([IDL.Principal], [Result], []),
     'revoke_red_envelope' : IDL.Func([IDL.Nat], [Result_1], []),
     'set_admin_acc' : IDL.Func([IDL.Principal], [Result], []),

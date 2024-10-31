@@ -34,14 +34,14 @@ export interface ReStatus {
   uid: number;
   amount: bigint;
   count: number;
-  expire_at: number;
+  expire_at: string;
   fee_amount: bigint;
   is_sent?: boolean;
   is_revoked?: boolean;
   // is_done?: boolean;
   receiver?: string;
   send_time?: Date;
-  create_time?: number;
+  create_time?: string;
   owner?: string;
   token_id?: string;
   is_random?: boolean;
@@ -179,8 +179,8 @@ export const getReStatusList = async (pool: Knex.Knex, page_start: number, page_
     const result_item: ExpendReStatus = {
       ...item,
       friendly_amount: null,
-      expire_at: parseInt(item.expire_at.toString().substring(0, 13)),
-      create_time: new Date(item.create_time??0).getTime(),
+      expire_at: item.expire_at.toString().substring(0, 10),
+      create_time: (new Date(item.create_time??0).getTime()).toString().substring(0, 10),
     };
     if (item_token_id != null) {
       const item_tid = getTidByCanisterId(item_token_id);

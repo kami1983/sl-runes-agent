@@ -118,7 +118,7 @@ export async function createRedEnvelope(userId: number, args: string, i18n: TFun
       uid: userId,
       amount,
       count,
-      expire_at: Number(expires_at),
+      expire_at: expires_at.toString(),
       fee_amount,
       is_sent: false,
       is_revoked: false
@@ -158,7 +158,7 @@ export async function sendRedEnvelope(userId: number, args: string[], i18n: TFun
     if (reStatus.is_revoked) {
       return [i18n('reapp_error_1112', { id: args[0] })]
     }
-    if (BigInt((new Date()).getTime()) * 1000000n > reStatus.expire_at) {
+    if (BigInt((new Date()).getTime()) * 1000000n > Number(reStatus.expire_at)) {
       return [i18n('reapp_error_1107', { id: args[0] })]
     }
     // [canister] get re
@@ -229,7 +229,7 @@ export async function revokeRedEnvelope(userId: number, args: string[], i18n: TF
     if (reStatus.is_revoked) {
       return i18n('reapp_error_1112', { id: args[0] })
     }
-    if (BigInt((new Date()).getTime()) * 1000000n < reStatus.expire_at) {
+    if (BigInt((new Date()).getTime()) * 1000000n < Number(reStatus.expire_at)) {
       return i18n('reapp_error_1113', { id: args[0] })
     }
 
@@ -306,7 +306,7 @@ export async function listRedEnvelope(userId: number, args: string[], i18n: TFun
           status = 'Revoked'
         } else {
           // is_done
-          if (BigInt((new Date()).getTime()) * 1000000n > dbItem.expire_at) {
+          if (BigInt((new Date()).getTime()) * 1000000n > Number(dbItem.expire_at)) {
             status = 'Expired'
           } else {
             if (dbItem.is_sent) {

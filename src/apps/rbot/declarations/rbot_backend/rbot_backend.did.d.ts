@@ -10,6 +10,7 @@ export interface GrabRedEnvelopeResult {
   'all_num' : number,
   'grab_amount' : bigint,
   'unreceived_amount' : bigint,
+  'expires_at' : [] | [bigint],
 }
 export interface OldEnvelope {
   'num' : number,
@@ -64,6 +65,10 @@ export interface _SERVICE {
   'is_token_in_white_list' : ActorMethod<[Principal], boolean>,
   'open_red_envelope' : ActorMethod<[bigint, Principal], Result_1>,
   'open_red_envelope2' : ActorMethod<[bigint, Principal], Result_3>,
+  'open_red_envelope3' : ActorMethod<
+    [bigint, Principal, string, string],
+    Result_3
+  >,
   'remove_token_from_white_list' : ActorMethod<[Principal], Result>,
   'revoke_red_envelope' : ActorMethod<[bigint], Result_1>,
   'set_admin_acc' : ActorMethod<[Principal], Result>,

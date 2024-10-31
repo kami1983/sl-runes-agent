@@ -16,6 +16,7 @@ import { _SERVICE } from "./declarations/rbot_backend/rbot_backend.did"
 import { stringToBigint, bigintToString } from './rbot_utils'
 import * as S from "./status"
 import { get } from "http"
+import { Number } from "bitcoinjs-lib/src/types"
 
 
 const RBOT_CANISTER_ID = process.env.RBOT_CANISTER_ID || ""
@@ -86,7 +87,7 @@ export async function createRedEnvelope(tid: number, userId: number, args: strin
   const random = (matches[3] === 'F') ? false : true
   const memo = matches[4] || ''
   // default: utc nanoseconds + 24hours
-  const expires_at = BigInt((new Date()).getTime() + ((24*7) * 60 * 60 * 1000)) * 1000000n
+  const expires_at = BigInt((new Date()).getTime() + ((24) * 60 * 60 * 1000)) * 1000000n
 
   // TODO: Approve to agent, then transfer_from to re_app + fee_address
   const fee_amount = amount * BigInt(token.fee_ratio) / 100n
@@ -119,7 +120,7 @@ export async function createRedEnvelope(tid: number, userId: number, args: strin
     memo: memo,
     is_random: random,
     amount: amount,
-    expires_at: [] // expires_at: [expires_at]
+    expires_at: [expires_at]
   }
 
   // out put time stamp
@@ -142,13 +143,14 @@ export async function createRedEnvelope(tid: number, userId: number, args: strin
     const rid = ret2['Ok'][0]
     // assert((rid <= Number.MAX_SAFE_INTEGER && rid >= Number.MIN_SAFE_INTEGER), `Whoops ${rid} ...`)
     // insert db
+    // console.log('Crewate Red Envelope:', {rid, amount, count, expires_at: expires_at.toString().substring(0,10), fee_amount, _token_symbol, userId, re})
     const reStatus = {
-      id: Number(rid),
+      id: parseInt(rid.toString()),
       rune: _token_symbol,
       uid: userId,
       amount,
       count,
-      expire_at: Number(expires_at) ,
+      expire_at: expires_at.toString().substring(0,10) ,
       fee_amount,
       is_sent: false,
       is_revoked: false,
@@ -157,6 +159,8 @@ export async function createRedEnvelope(tid: number, userId: number, args: strin
       is_random: re.is_random,
       memo: re.memo,
     }
+
+    console.log('reStatus - ', reStatus)
 
     await S.insertReStatus(await createPool(), reStatus)
     // select user/group
@@ -196,7 +200,7 @@ export async function sendRedEnvelope(userId: number, args: string[], i18n: TFun
     if (reStatus.is_revoked) {
       return [i18n('reapp_error_1112', { id: args[0] })]
     }
-    if (BigInt((new Date()).getTime()) * 1000000n > reStatus.expire_at) {
+    if (BigInt((new Date()).getTime()) * 1000000n > Number(reStatus.expire_at) ) {
       return [i18n('reapp_error_1107', { id: args[0] })]
     }
     // [canister] get re
@@ -242,6 +246,8 @@ export async function getRedEnvelope( args: string[], i18n: TFunction): Promise<
     return [i18n('msg_decimal_not_found')]
   }
 
+  console.log('Debug base_ret', {base_ret, expand_ret, _decimal})
+
   return {
     rid: args[0],
     ...base_ret,
@@ -256,7 +262,7 @@ export async function getRedEnvelope( args: string[], i18n: TFunction): Promise<
     token_id: base_ret.token_id.toText(),
     token_symbol: getTokenSymbolByTid(getTidByCanisterId(base_ret.token_id.toText())??tid),
     owner: base_ret.owner.toText(),
-    expires_at:[],
+    expires_at: base_ret.expires_at.toString().substring(0, 10) ,
     expand: {
       grab_amount: bigintToString(expand_ret.grab_amount, _decimal),
       all_num: expand_ret.all_num,
@@ -337,7 +343,7 @@ export async function revokeRedEnvelope(userId: number, args: string[], i18n: TF
     if (reStatus.is_revoked) {
       return i18n('reapp_error_1112', { id: args[0] })
     }
-    if (BigInt((new Date()).getTime()) * 1000000n < reStatus.expire_at) {
+    if (BigInt((new Date()).getTime()) * 1000000n < Number(reStatus.expire_at)) {
       return i18n('reapp_error_1113', { id: args[0] })
     }
 
@@ -417,7 +423,7 @@ export async function listRedEnvelope(userId: number, args: string[], i18n: TFun
           status = 'Revoked'
         } else {
           // is_done
-          if (BigInt((new Date()).getTime()) * 1000000n > dbItem.expire_at) {
+          if (BigInt((new Date()).getTime()) * 1000000n > Number(dbItem.expire_at)) {
             status = 'Expired'
           } else {
             if (dbItem.is_sent) {
