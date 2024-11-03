@@ -12,7 +12,7 @@ import i18next, { I18nContext, getLanguage, setLanguage } from "./i18n"
 import express, { Request, Response, NextFunction } from 'express';
 
 import { ResultWalletInfos, showWallet, transferToken } from './rbot_wallet_json';
-import { createRedEnvelope, getRedEnvelope, grabRedEnvelope, isAgentAcc, listRedEnvelope } from "./rbot_re_json";
+import { createRedEnvelope, getRedEnvelope, grabRedEnvelope, isAgentAcc, listRedEnvelope, revokeRedEnvelope } from "./rbot_re_json";
 import { getAgentIdentity, getUserIdentity, delegateIdentity, uuidToNumber } from '../../identity'
 
 import Knex from 'knex';
@@ -156,6 +156,9 @@ export const slCallback = async (req: Request, res: Response, next: NextFunction
       const keys = (req.body.keys??'').split(',');
       res.send([{get: req.query, post: req.body}, await actionGetGlobalKeys(keys)]);
       break;
+    case '/sl/revoke/re':
+      res.send([{get: req.query, post: req.body}, await actionRevokeRedEnvelope(uid, req.body.rid)]);
+      break;
     default:
       next();
   }
@@ -270,7 +273,15 @@ function extractUser(req: Request): { uid: number, username: string, tid: number
   return { uid, username, tid }
 }
 
-// const express = require('express');
+async function actionRevokeRedEnvelope(uid: number, rid: number): Promise<string> {
+  try {
+    return revokeRedEnvelope(uid, rid, getI18n());
+  } catch (e) {
+    console.log('error:', e)
+    return (e as Error).message
+  }
+}
+
 // const app = express();
 
 // app.get('/functionOne', (req, res) => {

@@ -325,44 +325,54 @@ export async function grabRedEnvelope(tid: number, userId: number, username: str
   }
 }
 
-export async function revokeRedEnvelope(userId: number, args: string[], i18n: TFunction): Promise<string> {
-  if (args.length !== 1) {
-    return i18n('msg_how_to_revoke')
-  }
-  try {
-    typeof BigInt(args[0]) === 'bigint'
-  } catch (error) {
+export async function revokeRedEnvelope(userId: number, rid: number, i18n: TFunction): Promise<string> {
+  // console.log('revokeRedEnvelope', {userId, args, })  
+  // if (args.length !== 1) {
+  //   return i18n('msg_how_to_revoke')
+  // }
+  // try {
+  //   typeof BigInt(args[0]) === 'bigint'
+  // } catch (error) {
+  //   return i18n('msg_how_to_revoke')
+  // }
+
+  if(rid <= 0){
     return i18n('msg_how_to_revoke')
   }
 
   // is_revoked || expire_at
   const pool = await createPool()
-  const reStatus = await S.getReStatus(pool, Number(args[0]), userId)
+  const reStatus = await S.getReStatus(pool, rid, userId)
+  // console.log('revokeRedEnvelope', {reStatus, rid, userId})
+
   if (reStatus) {
     // [db] is_revoked && expire
     if (reStatus.is_revoked) {
-      return i18n('reapp_error_1112', { id: args[0] })
+      return i18n('reapp_error_1112', { id: rid })
     }
+    console.log('Check expire_at:', BigInt((new Date()).getTime()) * 1000000n)
     if (BigInt((new Date()).getTime()) * 1000000n < Number(reStatus.expire_at)) {
-      return i18n('reapp_error_1113', { id: args[0] })
+      return i18n('reapp_error_1113', { id: rid })
     }
 
     const userIdentity = getUserIdentity(userId)
     const serviceActor = await getAgentActor()
-    const ret = await serviceActor.revoke_red_envelope(BigInt(args[0]), /* TODO: userIdentity.getPrincipal()*/)
+    // console.log('BigInt(rid) = ', BigInt(rid))
+    const ret = await serviceActor.revoke_red_envelope(BigInt(rid)) /* TODO: userIdentity.getPrincipal()*/
+    // console.log('revokeRedEnvelope', {ret})
     if ('Err' in ret) {
       const code = `reapp_error_${ret['Err'][0].toString()}`
       if (errorWithRedEnvelopeId(code)) {
-        return i18n(code, { id: args[0] })
+        return i18n(code, { id: rid })
       } else {
         return i18n(code)
       }
     } else {
-      await S.updateReStatusIsRevoked(await createPool(), Number(args[0]), true)
+      await S.updateReStatusIsRevoked(await createPool(), rid, true)
       return i18n('msg_revoke', { amount: bigintToString(ret['Ok'], parseInt(TOKEN_DECIMALS)) })
     }
   } else {
-    return i18n('reapp_error_1108', { id: args[0] })
+    return i18n('reapp_error_1108', { id: rid })
   }
 }
 
