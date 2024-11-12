@@ -191,7 +191,7 @@ export async function sendRedEnvelope(userId: number, args: string[], i18n: TFun
   }
 
   const pool = await createPool()
-  const reStatus = await S.getReStatus(pool, Number(args[0]), userId)
+  const reStatus = await S.getReStatus(pool, parseInt(args[0]), userId)
   if (reStatus) {
     // [db] is_sent && is_revoked && expire
     if (reStatus.is_sent) {
@@ -200,7 +200,7 @@ export async function sendRedEnvelope(userId: number, args: string[], i18n: TFun
     if (reStatus.is_revoked) {
       return [i18n('reapp_error_1112', { id: args[0] })]
     }
-    if (BigInt((new Date()).getTime()) * 1000000n > Number(reStatus.expire_at) ) {
+    if (BigInt((new Date()).getTime()) * 1000000n > parseInt(reStatus.expire_at) ) {
       return [i18n('reapp_error_1107', { id: args[0] })]
     }
     // [canister] get re
@@ -210,7 +210,7 @@ export async function sendRedEnvelope(userId: number, args: string[], i18n: TFun
       return [i18n('reapp_error_1112', { id: args[0] })]
     }
 
-    const keyboard = RBOT_SELECT_USER_GROUP_KEYBOARD(Number(args[0]), ret[0].num, i18n)
+    const keyboard = RBOT_SELECT_USER_GROUP_KEYBOARD(parseInt(args[0]), ret[0].num, i18n)
     return [i18n('msg_send'), keyboard]
   } else {
     return [i18n('reapp_error_1108', { id: args[0] })]
