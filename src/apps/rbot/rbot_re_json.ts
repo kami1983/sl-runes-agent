@@ -282,7 +282,7 @@ export async function grabRedEnvelope(tid: number, userId: number, username: str
     return ['tid error', 'Can not find token-symbol or token-decimal by tid']
   }
   
-  const rid = Number(args[0]);
+  const rid = parseInt(args[0]);
   const pool = await createPool()
 
   // create wallet with channel

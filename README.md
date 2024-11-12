@@ -97,17 +97,15 @@ gcloud functions deploy helloworld \
 
 ```
 
-### 
+### Second life upgrade
 ```
-测试token
+Test token
 https://a4gq6-oaaaa-aaaab-qaa4q-cai.raw.icp0.io/?id=ugaqt-wqaaa-aaaar-qafgq-cai
 
-测试whoami
+Test principal id
 gb6fh-2yaaa-aaaal-ad6cq-cai
 
-红包
+Test canister id
 https://a4gq6-oaaaa-aaaab-qaa4q-cai.raw.icp0.io/?id=pqtoi-6iaaa-aaaal-ad7rq-cai
-
-
 
 ```
