@@ -109,6 +109,7 @@ export const slCallback = async (req: Request, res: Response, next: NextFunction
         const page = req.body.page??0;
         const size = req.body.size??10;
         let owner = req.body.owner;
+        console.log('DEBUG restats/list :', {page, size, owner});
         if(owner != undefined){
           owner = Principal.fromText(owner)
         }else{
