@@ -108,10 +108,12 @@ export const slCallback = async (req: Request, res: Response, next: NextFunction
       if(_checkToken()){
         const page = req.body.page??0;
         const size = req.body.size??10;
+
         let owner = req.body.owner;
-        console.log('DEBUG restats/list :', {page, size, owner});
+        // console.log('DEBUG restats/list :', {page, size, owner});
         if(owner != undefined){
-          owner = Principal.fromText(owner)
+          const userid = uuidToNumber(owner);
+          owner = getUserIdentity(userid).getPrincipal()
         }else{
           owner = null;
         }
