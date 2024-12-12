@@ -126,7 +126,8 @@ export const slCallback = async (req: Request, res: Response, next: NextFunction
         const size = req.body.size??10;
         let recipient = req.body.recipient;
         if(recipient != undefined){
-          recipient = Principal.fromText(recipient)
+          const userid = uuidToNumber(recipient);
+          recipient = getUserIdentity(userid).getPrincipal()
         }else{
           recipient = null;
         }
