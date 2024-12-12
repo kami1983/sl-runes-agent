@@ -122,7 +122,7 @@ export const getReStatusListByRecipient = async (pool: Knex.Knex, page_start: nu
     .orderBy('s.id', 'desc')
     .limit(page_size)
     .offset(page_start * page_size)
-    .select('s.*, s.create_time as snatch_create_time', 'r.*');
+    .select('s.*', pool.raw('s.create_time as snatch_create_time'), 'r.*');
 
     const status_list = await query;
     console.log('status_list: ', status_list)
