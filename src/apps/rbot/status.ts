@@ -122,7 +122,7 @@ export const getReStatusListByRecipient = async (pool: Knex.Knex, page_start: nu
     .orderBy('s.id', 'desc')
     .limit(page_size)
     .offset(page_start * page_size)
-    .select('s.*', 'r.*');
+    .select('s.*, s.create_time as snatch_create_time', 'r.*');
 
     const status_list = await query;
     console.log('status_list: ', status_list)
@@ -135,8 +135,8 @@ export const getReStatusListByRecipient = async (pool: Knex.Knex, page_start: nu
       const result_item = {
         ...item,
         friendly_amount: null,
-        expire_at: item.expire_at.toString().substring(0, 10),
-        create_time: (new Date(item.create_time??0).getTime()).toString().substring(0, 10),
+        // expire_at: item.expire_at.toString().substring(0, 10),
+        create_time: (new Date(item.snatch_create_time??0).getTime()).toString().substring(0, 10),
       };
       if (item_token_id != null) {
         const item_tid = getTidByCanisterId(item_token_id);
