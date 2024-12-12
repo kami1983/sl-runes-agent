@@ -127,20 +127,45 @@ export const getReStatusListByRecipient = async (pool: Knex.Knex, page_start: nu
     const status_list = await query;
     console.log('status_list: ', status_list)
 
+    // append a friendly_amount field to each object in status_list for displaying friendly amount
+    const result = [];
+    for (let i = 0; i < status_list.length; i++) {
+      const item = status_list[i];
+      const item_token_id = item.token_id;
+      const result_item = {
+        ...item,
+        friendly_amount: null,
+        expire_at: item.expire_at.toString().substring(0, 10),
+        create_time: (new Date(item.create_time??0).getTime()).toString().substring(0, 10),
+      };
+      if (item_token_id != null) {
+        const item_tid = getTidByCanisterId(item_token_id);
+        if(item_tid != null) {
+          const item_decimal = getTokenDecimalByTid(item_tid);
+          if(item_decimal != null) {
+            result_item.friendly_amount = bigintToString(item.amount, item_decimal);
+          }
+        }
+      }
+      result.push(result_item);
+    }
+
     const keys = [
       "id", "uid", "code", "amount", "discard", "create_time", 
       "recipient", "rune", "count", "expire_at", "fee_amount", 
-      "is_sent", "is_revoked", "is_done", "receiver", "send_time", "owner", "token_id", "is_random", "memo"
+      "is_sent", "is_revoked", "is_done", "receiver", "send_time", "owner", "token_id", "is_random", "memo", "friendly_amount"
     ]
     const values = []
-    for (const idx in status_list) {
-      const item = status_list[idx]
+    for (const idx in result) {
+      const item = result[idx]
       let value = []
       for (const key of keys) {
         value.push(item[key])
       }
       values.push(value)
     }
+
+
     return [keys, values] as [string[], any[]];
 }
 
