@@ -16,7 +16,6 @@ import { _SERVICE } from "./declarations/rbot_backend/rbot_backend.did"
 import { stringToBigint, bigintToString } from './rbot_utils'
 import * as S from "./status"
 import { get } from "http"
-import { Number } from "bitcoinjs-lib/src/types"
 
 
 const RBOT_CANISTER_ID = process.env.RBOT_CANISTER_ID || ""
@@ -372,17 +371,14 @@ export async function listRedEnvelope(userId: number, args: string[], i18n: TFun
 
   // console.log('check principal:', userIdentity.getPrincipal().toText())
   const rids = await serviceActor.get_rids_by_owner(userIdentity.getPrincipal())
-  console.log('listRedEnvelope rids:', rids)
   const getStatusFromCanister = async (rids: bigint[]) => {
     const status = await Promise.all(rids.map(async (rid) => {
       let amount = 0n
       let used = 0n
       let share_num = 0
 
-      console.log('BigInt(rid) -', BigInt(rid))
       const ret = await serviceActor.get_red_envelope(BigInt(rid))
       
-      console.log('ret - ', ret)
       if (ret[0]?.participants) {
         amount = ret[0].amount
         share_num = ret[0].num
@@ -393,14 +389,13 @@ export async function listRedEnvelope(userId: number, args: string[], i18n: TFun
     return status
   }
 
-  console.log('RUN 1 ')
 
   // page
   let page = 1
   const max = Math.ceil(rids.length / 20)
   if (args.length >= 1) {
-    const num = Number(args[0])
-    if (num > 0 && Number.isInteger(num)) {
+    const num = parseInt(args[0])
+    if (num > 0) {
       page = num
     }
     if (page > max) {
@@ -408,23 +403,21 @@ export async function listRedEnvelope(userId: number, args: string[], i18n: TFun
     }
   }
 
-  console.log('RUN 2 ')
+  console.log('b.toString() = ', rids[0].toString(), 'a.toString() = ', rids[1].toString())
   // sort slice 
-  const sorted = rids.sort((a, b) => Number(b) - Number(a))
+  const sorted = rids.sort((a, b) => parseInt(b.toString()) - parseInt(a.toString()))
   const startIndex = (page - 1) * 20
   const endIndex = page * 20
   const pageData = sorted.slice(startIndex, endIndex)
-  const pageDataNumber = pageData.map(bigint => Number(bigint))
+  const pageDataNumber = pageData.map(bigint => parseInt(bigint.toString()))
   // console.log('listRedEnvelope t1: ', (new Date()).toISOString())
-  console.log('RUN 3 ')
   const scStatus = await getStatusFromCanister(rids)
-  console.log('RUN 4 ')
   const dbStatus = await S.getReStatusByIds(await createPool(), pageDataNumber, userId, share_count)
   // console.log('listRedEnvelope t2: ', (new Date()).toISOString())
   const data: string[][] = []
   for (const id of pageDataNumber) {
     const scItem = scStatus.find(item => item.rid === BigInt(id))
-    const dbItem = dbStatus.find(item => Number(item.id) === id)
+    const dbItem = dbStatus.find(item => item.id === id)
     if (scItem) {
       const amount = scItem.amount
       const remain = scItem.amount - scItem.used
@@ -435,7 +428,7 @@ export async function listRedEnvelope(userId: number, args: string[], i18n: TFun
           status = 'Revoked'
         } else {
           // is_done
-          if (BigInt((new Date()).getTime()) * 1000000n > Number(dbItem.expire_at)) {
+          if (BigInt((new Date()).getTime()) * 1000000n > BigInt(dbItem.expire_at)) {
             status = 'Expired'
           } else {
             if (dbItem.is_sent) {
