@@ -370,7 +370,7 @@ export async function listRedEnvelope(userId: number, args: string[], i18n: TFun
   const userIdentity = getUserIdentity(userId)
   const serviceActor = await getAgentActor()
 
-  console.log('check principal:', userIdentity.getPrincipal().toText())
+  // console.log('check principal:', userIdentity.getPrincipal().toText())
   const rids = await serviceActor.get_rids_by_owner(userIdentity.getPrincipal())
   console.log('listRedEnvelope rids:', rids)
   const getStatusFromCanister = async (rids: bigint[]) => {
@@ -378,7 +378,11 @@ export async function listRedEnvelope(userId: number, args: string[], i18n: TFun
       let amount = 0n
       let used = 0n
       let share_num = 0
+
+      console.log('BigInt(rid) -', BigInt(rid))
       const ret = await serviceActor.get_red_envelope(BigInt(rid))
+      
+      console.log('ret - ', ret)
       if (ret[0]?.participants) {
         amount = ret[0].amount
         share_num = ret[0].num
@@ -388,6 +392,8 @@ export async function listRedEnvelope(userId: number, args: string[], i18n: TFun
     }))
     return status
   }
+
+  console.log('RUN 1 ')
 
   // page
   let page = 1
@@ -402,6 +408,7 @@ export async function listRedEnvelope(userId: number, args: string[], i18n: TFun
     }
   }
 
+  console.log('RUN 2 ')
   // sort slice 
   const sorted = rids.sort((a, b) => Number(b) - Number(a))
   const startIndex = (page - 1) * 20
@@ -409,7 +416,9 @@ export async function listRedEnvelope(userId: number, args: string[], i18n: TFun
   const pageData = sorted.slice(startIndex, endIndex)
   const pageDataNumber = pageData.map(bigint => Number(bigint))
   // console.log('listRedEnvelope t1: ', (new Date()).toISOString())
+  console.log('RUN 3 ')
   const scStatus = await getStatusFromCanister(rids)
+  console.log('RUN 4 ')
   const dbStatus = await S.getReStatusByIds(await createPool(), pageDataNumber, userId, share_count)
   // console.log('listRedEnvelope t2: ', (new Date()).toISOString())
   const data: string[][] = []
