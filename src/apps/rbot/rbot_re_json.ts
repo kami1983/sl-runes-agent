@@ -326,15 +326,6 @@ export async function grabRedEnvelope(tid: number, userId: number, username: str
 }
 
 export async function revokeRedEnvelope(userId: number, rid: number, i18n: TFunction): Promise<string> {
-  // console.log('revokeRedEnvelope', {userId, args, })  
-  // if (args.length !== 1) {
-  //   return i18n('msg_how_to_revoke')
-  // }
-  // try {
-  //   typeof BigInt(args[0]) === 'bigint'
-  // } catch (error) {
-  //   return i18n('msg_how_to_revoke')
-  // }
 
   if(rid <= 0){
     return i18n('msg_how_to_revoke')
@@ -343,7 +334,6 @@ export async function revokeRedEnvelope(userId: number, rid: number, i18n: TFunc
   // is_revoked || expire_at
   const pool = await createPool()
   const reStatus = await S.getReStatus(pool, rid, userId)
-  // console.log('revokeRedEnvelope', {reStatus, rid, userId})
 
   if (reStatus) {
     // [db] is_revoked && expire
@@ -379,6 +369,8 @@ export async function revokeRedEnvelope(userId: number, rid: number, i18n: TFunc
 export async function listRedEnvelope(userId: number, args: string[], i18n: TFunction, share_count?: number,) {
   const userIdentity = getUserIdentity(userId)
   const serviceActor = await getAgentActor()
+
+  console.log('check principal:', userIdentity.getPrincipal().toText())
   const rids = await serviceActor.get_rids_by_owner(userIdentity.getPrincipal())
   const getStatusFromCanister = async (rids: bigint[]) => {
     const status = await Promise.all(rids.map(async (rid) => {

@@ -2,6 +2,7 @@
 // import { message } from 'telegraf/filters';
 import { TFunction } from "i18next"
 import { Principal } from '@dfinity/principal'
+import jwt from 'jsonwebtoken';
 
 // import { getUserIdentity } from '../../identity'
 import { createPool } from '../../tokens'
@@ -30,6 +31,8 @@ const WEBHOOK_PATH = process.env.RBOT_WEBHOOK_PATH || ""
 const SECRET_TOKEN = process.env.RBOT_SECRET_TOKEN || ""
 const RE_START_PICTURE = 'https://storage.googleapis.com/socialfi-agent/rebot/snatch.jpg'
 const RE_SNATCH_PICTURE = 'https://storage.googleapis.com/socialfi-agent/rebot/snatch.jpg'
+const JWT_SECRET_KEY = process.env.JWT_SECRET_KEY || ''
+const APP_MODE = process.env.APP_MODE || 'prod'
 
 
 const i18nTF = i18next.getFixedT('en')
@@ -69,6 +72,16 @@ export const slCallback = async (req: Request, res: Response, next: NextFunction
   })
 
   console.log('uid:', uid, 'username:', username)
+
+  const jwtVerify = (token: string): jwt.JwtPayload | null  => {
+    try {
+      const decoded = jwt.verify(token, JWT_SECRET_KEY) as jwt.JwtPayload;
+      return decoded
+    } catch (err) {
+      console.log('Invalid token', {err});
+      return null;  // Token 无效
+    }
+  }
 
   switch (req.path) {
     case '/sl/wallet':
@@ -162,6 +175,23 @@ export const slCallback = async (req: Request, res: Response, next: NextFunction
       break;
     case '/sl/revoke/re':
       res.send([{get: req.query, post: req.body}, await actionRevokeRedEnvelope(uid, req.body.rid)]);
+      break;
+    case '/sl/jwt_verify':
+
+      res.send(jwtVerify(req.body.token));
+      break;
+    case '/sl/jwt_sign':
+      res.send(jwt.sign({uid: uid}, JWT_SECRET_KEY, {expiresIn: '1h'}));
+
+    case '/sl/gettoken':
+      const md5 = require('md5');
+      const now = Math.floor(new Date().getTime()/1000);
+      res.send({token: md5( `${uid}${now}${JWT_SECRET_KEY}`), uid, timestamp: now});
+      break;
+    case '/sl/testtoken':
+      if(_checkToken()){
+        res.send({get: req.query, post: req.body});
+      }
       break;
     default:
       next();
@@ -259,13 +289,31 @@ async function checkIsAgent(): Promise<boolean> {
 
 
 function checkToken(req: Request): boolean {
-  const uid = req.query.uid?.toString()??'' ;
-  const username = req.query.username?.toString()??'';
+  
+  const { uid, username, tid } = extractUser(req);
   const token = req.query.token;
-  const timestamp = req.query.timestamp;
-  if (uid ==='' || username === '' || token === undefined || timestamp === undefined) {
+  const timestamp = req.query.timestamp?.toString()??'';
+
+  console.log('checkToken:', {uid, username, token, timestamp})
+
+  if (uid <=0 || token === '' || timestamp === '') {
     return false;
   }
+
+  if(APP_MODE !== 'test'){
+    const now = Math.floor(new Date().getTime()/1000);
+    console.log('Diff = now:', now, 'timestamp:', parseInt(timestamp))
+    if (now - parseInt(timestamp) > 60) {
+      return false;
+    }
+    
+    const md5 = require('md5');
+    const md5_token = md5( `${uid}${timestamp}${JWT_SECRET_KEY}`);
+    if(token !== md5_token){
+      return false;
+    }
+  }
+  
   return true
 }
 
