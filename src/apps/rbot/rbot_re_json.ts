@@ -372,6 +372,7 @@ export async function listRedEnvelope(userId: number, args: string[], i18n: TFun
 
   console.log('check principal:', userIdentity.getPrincipal().toText())
   const rids = await serviceActor.get_rids_by_owner(userIdentity.getPrincipal())
+  console.log('listRedEnvelope rids:', rids)
   const getStatusFromCanister = async (rids: bigint[]) => {
     const status = await Promise.all(rids.map(async (rid) => {
       let amount = 0n
