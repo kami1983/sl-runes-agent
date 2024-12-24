@@ -65,7 +65,7 @@ export const slCallback = async (req: Request, res: Response, next: NextFunction
     return true
   }
 
-  const { uid, username, tid } = extractUser(req);
+  const { uid, username, tid, timestamp, token } = extractUser(req);
   await S.insertUser(await createPool(), {
     uid,
     username,
@@ -184,9 +184,11 @@ export const slCallback = async (req: Request, res: Response, next: NextFunction
       res.send(jwt.sign({uid: uid}, JWT_SECRET_KEY, {expiresIn: '1h'}));
 
     case '/sl/gettoken':
-      const md5 = require('md5');
-      const now = Math.floor(new Date().getTime()/1000);
-      res.send({token: md5( `${uid}${now}${JWT_SECRET_KEY}`), uid, timestamp: now});
+      if(APP_MODE == 'test' || APP_MODE == 'dev'){
+        const md5 = require('md5');
+        const now = timestamp ?? Math.floor(new Date().getTime()/1000);
+        res.send({token: md5( `${uid}${now}${JWT_SECRET_KEY}`), uid, timestamp: now});
+      }
       break;
     case '/sl/testtoken':
       if(_checkToken()){
@@ -290,9 +292,9 @@ async function checkIsAgent(): Promise<boolean> {
 
 function checkToken(req: Request): boolean {
   
-  const { uid, username, tid } = extractUser(req);
-  const token = req.query.token;
-  const timestamp = req.query.timestamp?.toString()??'';
+  const { uid, username, tid, timestamp, token} = extractUser(req);
+  // const token = req.query.token;
+  // const timestamp = req.query.timestamp?.toString()??'';
 
   console.log('checkToken:', {uid, username, token, timestamp})
 
@@ -317,12 +319,14 @@ function checkToken(req: Request): boolean {
   return true
 }
 
-function extractUser(req: Request): { uid: number, username: string, tid: number} {
+function extractUser(req: Request): { uid: number, username: string, tid: number, timestamp: string, token: string } {
   const uid = uuidToNumber(req.query.uid?.toString()??'0');
   const username = req.query.username?.toString()??'';
   const tid = parseInt( req.query.tid?.toString()??'0');
-  console.log('extractUser:', {uid, username, tid})
-  return { uid, username, tid }
+  const timestamp = req.query.timestamp?.toString()??'';
+  const token = req.query.token?.toString()??'';
+  console.log('extractUser:', {uid, username, tid, timestamp, token})
+  return { uid, username, tid, timestamp, token }
 }
 
 async function actionRevokeRedEnvelope(uid: number, rid: number): Promise<string> {
