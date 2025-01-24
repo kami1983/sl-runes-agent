@@ -16,6 +16,8 @@ import { ResultWalletInfos, showWallet, transferToken } from './rbot_wallet_json
 import { createRedEnvelope, getRedEnvelope, grabRedEnvelope, isAgentAcc, listRedEnvelope, revokeRedEnvelope } from "./rbot_re_json";
 import { getAgentIdentity, getUserIdentity, delegateIdentity, uuidToNumber } from '../../identity'
 
+import { llMD5String } from '../../utils'
+
 import Knex from 'knex';
 
 import * as S from "./status"
@@ -65,7 +67,7 @@ export const slCallback = async (req: Request, res: Response, next: NextFunction
     return true
   }
 
-  const { uid, username, tid, timestamp, token } = extractUser(req);
+  const { uid, username, tid, timestamp, token, slUid} = extractUser(req);
   await S.insertUser(await createPool(), {
     uid,
     username,
@@ -186,8 +188,9 @@ export const slCallback = async (req: Request, res: Response, next: NextFunction
     case '/sl/gettoken':
       if(APP_MODE == 'test' || APP_MODE == 'dev'){
         const md5 = require('md5');
-        const now = timestamp ?? Math.floor(new Date().getTime()/1000);
-        res.send({token: md5( `${uid}${now}${JWT_SECRET_KEY}`), uid, timestamp: now});
+        const now = req.query.timestamp??Math.floor(new Date().getTime()/1000);
+
+        res.send({token: llMD5String( `${slUid}${now}${JWT_SECRET_KEY}`,0), uid, timestamp: now, 'YZ2': llMD5String('11386b74-a76d-4d28-9e8d-a5de478583151735043675TEST-ATOCHA-WNXKFKAKDKFKSDFDKSNNGKDSFKDSAAFNDSDFSDF',0 )});
       }
       break;
     case '/sl/testtoken':
@@ -292,7 +295,7 @@ async function checkIsAgent(): Promise<boolean> {
 
 function checkToken(req: Request): boolean {
   
-  const { uid, username, tid, timestamp, token} = extractUser(req);
+  const { uid, username, tid, timestamp, token, slUid} = extractUser(req);
   // const token = req.query.token;
   // const timestamp = req.query.timestamp?.toString()??'';
 
@@ -309,8 +312,10 @@ function checkToken(req: Request): boolean {
       return false;
     }
     
-    const md5 = require('md5');
-    const md5_token = md5( `${uid}${timestamp}${JWT_SECRET_KEY}`);
+    // const md5 = require('md5');
+    // const md5_token = md5( `${uid}${timestamp}${JWT_SECRET_KEY}`);
+
+    const md5_token = llMD5String(`${slUid}${timestamp}${JWT_SECRET_KEY}`, 0);
     if(token !== md5_token){
       return false;
     }
@@ -319,14 +324,15 @@ function checkToken(req: Request): boolean {
   return true
 }
 
-function extractUser(req: Request): { uid: number, username: string, tid: number, timestamp: string, token: string } {
+function extractUser(req: Request): { uid: number, username: string, tid: number, timestamp: string, token: string, slUid: string } {
+  const slUid = req.query.uid?.toString()??'NONE';
   const uid = uuidToNumber(req.query.uid?.toString()??'0');
   const username = req.query.username?.toString()??'';
   const tid = parseInt( req.query.tid?.toString()??'0');
   const timestamp = req.query.timestamp?.toString()??'';
   const token = req.query.token?.toString()??'';
   console.log('extractUser:', {uid, username, tid, timestamp, token})
-  return { uid, username, tid, timestamp, token }
+  return { uid, username, tid, timestamp, token, slUid }
 }
 
 async function actionRevokeRedEnvelope(uid: number, rid: number): Promise<string> {

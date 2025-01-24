@@ -1,5 +1,6 @@
 import { HttpAgent, HttpAgentOptions } from '@dfinity/agent';
 import dotenv from 'dotenv';
+
 dotenv.config();
 
 export const makeAgent = async (options?: HttpAgentOptions) => {
@@ -55,3 +56,13 @@ export function getTidByCanisterId(canisterId: string): number | null {
   return null
 }
 
+
+export function llMD5String(src: string, nonce: number) {
+  const crypto = require('crypto');
+  // 将 nonce 转换为字符串并拼接到 src
+  const input = src +":" + nonce.toString();
+  // 计算 MD5 哈希（注意编码方式）
+  const hash = crypto.createHash('md5').update(input, 'utf8').digest('hex');
+  // 返回结果（LSL 的 llMD5String 返回小写，这里保持一致）
+  return hash.toLowerCase();
+}
