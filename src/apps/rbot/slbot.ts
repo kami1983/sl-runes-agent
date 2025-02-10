@@ -73,7 +73,7 @@ export const slCallback = async (req: Request, res: Response, next: NextFunction
     username,
   })
 
-  console.log('uid:', uid, 'username:', username)
+  // console.log('uid:', uid, 'username:', username, 'slUid:', slUid, 'tid:', tid, 'timestamp:', timestamp)
 
   const jwtVerify = (token: string): jwt.JwtPayload | null  => {
     try {
@@ -186,12 +186,12 @@ export const slCallback = async (req: Request, res: Response, next: NextFunction
       res.send(jwt.sign({uid: uid}, JWT_SECRET_KEY, {expiresIn: '1h'}));
 
     case '/sl/gettoken':
-      if(APP_MODE == 'test' || APP_MODE == 'dev'){
+      // if(APP_MODE == 'test' || APP_MODE == 'dev'){
         const md5 = require('md5');
         const now = req.query.timestamp??Math.floor(new Date().getTime()/1000);
 
         res.send({token: llMD5String( `${slUid}${now}${JWT_SECRET_KEY}`,0), uid, timestamp: now, 'YZ2': llMD5String('11386b74-a76d-4d28-9e8d-a5de478583151735043675TEST-ATOCHA-WNXKFKAKDKFKSDFDKSNNGKDSFKDSAAFNDSDFSDF',0 )});
-      }
+      // }
       break;
     case '/sl/testtoken':
       if(_checkToken()){
@@ -299,7 +299,7 @@ function checkToken(req: Request): boolean {
   // const token = req.query.token;
   // const timestamp = req.query.timestamp?.toString()??'';
 
-  console.log('checkToken:', {uid, username, token, timestamp})
+  console.log('checkToken:', {uid, username, token, timestamp, slUid})
 
   if (uid <=0 || token === '' || timestamp === '') {
     return false;
