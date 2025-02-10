@@ -187,6 +187,7 @@ export const slCallback = async (req: Request, res: Response, next: NextFunction
 
     case '/sl/gettoken':
       // if(APP_MODE == 'test' || APP_MODE == 'dev'){
+        console.log('Evn APP_MODE:', APP_MODE);
         const md5 = require('md5');
         const now = req.query.timestamp??Math.floor(new Date().getTime()/1000);
 
