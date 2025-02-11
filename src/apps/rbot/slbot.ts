@@ -124,7 +124,7 @@ export const slCallback = async (req: Request, res: Response, next: NextFunction
         const page = req.body.page??0;
         const size = req.body.size??10;
 
-        let owner = req.body.owner;
+        let owner = req.body.uid;
         // console.log('DEBUG restats/list :', {page, size, owner});
         if(owner != undefined){
           const userid = uuidToNumber(owner);
@@ -326,6 +326,8 @@ function checkToken(req: Request): boolean {
 }
 
 function extractUser(req: Request): { uid: number, username: string, tid: number, timestamp: string, token: string, slUid: string } {
+  
+  console.log('extractUser *** ', req.query);
   const slUid = req.query.uid?.toString()??'NONE';
   const uid = uuidToNumber(req.query.uid?.toString()??'0');
   const username = req.query.username?.toString()??'';
