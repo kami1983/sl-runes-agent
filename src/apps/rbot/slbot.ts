@@ -309,12 +309,9 @@ function checkToken(req: Request): boolean {
   if(APP_MODE !== 'test'){
     const now = Math.floor(new Date().getTime()/1000);
     console.log('Diff = now:', now, 'timestamp:', parseInt(timestamp))
-    if (now - parseInt(timestamp) > 60) {
-      return false;
-    }
-    
-    // const md5 = require('md5');
-    // const md5_token = md5( `${uid}${timestamp}${JWT_SECRET_KEY}`);
+    // if (now - parseInt(timestamp) > 60) {
+    //   return false;
+    // }
 
     const md5_token = llMD5String(`${slUid}${timestamp}${JWT_SECRET_KEY}`, 0);
     if(token !== md5_token){
