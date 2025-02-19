@@ -168,7 +168,11 @@ export const slCallback = async (req: Request, res: Response, next: NextFunction
       res.send([{get: req.query, post: req.body}, await actionLocationList(minutes)]);
       break;
     case '/sl/global/keys/update':
-      res.send([{get: req.query, post: req.body}, await actionUpdateGlobalKeys(Object.entries(req.body) as [string, string][])]);
+      if(_checkToken()){
+        res.send([{get: req.query, post: req.body}, await actionUpdateGlobalKeys(Object.entries(req.body) as [string, string][])]);
+      }else{
+        res.status(401).send('Unauthorized user');
+      }
       break;
     case '/sl/global/keys/get':
       // Get post data of keys
