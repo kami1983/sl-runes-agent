@@ -86,7 +86,7 @@ export async function createRedEnvelope(tid: number, userId: number, args: strin
   const random = (matches[3] === 'F') ? false : true
   const memo = matches[4] || ''
   // default: utc nanoseconds + 24hours
-  const expires_at = BigInt((new Date()).getTime() + ((24) * 60 * 60 * 1000)) * 1000000n
+  const expires_at = BigInt((new Date()).getTime() + ((24 * 7) * 60 * 60 * 1000)) * 1000000n
 
   // TODO: Approve to agent, then transfer_from to re_app + fee_address
   const fee_amount = amount * BigInt(token.fee_ratio) / 100n

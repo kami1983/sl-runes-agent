@@ -176,10 +176,12 @@ export const getReStatusList = async (pool: Knex.Knex, page_start: number, page_
     token_symbol = getTokenSymbolByTid(tid);
   }
 
+  // 获取 re_status id > 870 的数据
   let query = pool('re_status as r')
     .leftJoin('snatch_status as s', function () {
       this.on('s.id', '=', 'r.id').andOn('s.code', '=', pool.raw('?', [0]));
     })
+    .where('r.id', '>', 870)
     .orderBy('r.id', 'desc')
     .limit(page_size)
     .offset(page_start * page_size)
