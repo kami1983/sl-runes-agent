@@ -16,6 +16,7 @@ import { _SERVICE } from "./declarations/rbot_backend/rbot_backend.did"
 import { stringToBigint, bigintToString } from './rbot_utils'
 import * as S from "./status"
 import { get } from "http"
+import exp from "constants"
 
 
 const RBOT_CANISTER_ID = process.env.RBOT_CANISTER_ID || ""
@@ -294,7 +295,7 @@ export async function grabRedEnvelope(tid: number, userId: number, username: str
   // snatch re
   const serviceActor = await getAgentActor()
   const ret = await serviceActor.open_red_envelope2(BigInt(args[0]), userPrincipal)
-  console.log('grabRedEnvelope', {ret, _decimal})
+  console.log('--》 grabRedEnvelope', {ret, _decimal})
   if ('Err' in ret) {
     // update snatch status
     await S.updateSnatchStatus(pool, { id: rid, uid: userId, code: Number(ret['Err'][0]), amount: 0n, discard: 0, recipient: userPrincipal.toText() })
@@ -320,6 +321,13 @@ export async function grabRedEnvelope(tid: number, userId: number, username: str
       all_num: ret['Ok'].all_num,
       all_amount:  bigintToString(ret['Ok'].all_amount, _decimal),
       unreceived_amount: bigintToString(ret['Ok'].unreceived_amount, _decimal),
+      // expand: {
+      //   grab_amount: amount,
+      //   all_num: ret['Ok'].all_num,
+      //   unreceived_amount: bigintToString(ret['Ok'].unreceived_amount, _decimal),
+      //   all_amount: bigintToString(ret['Ok'].all_amount, _decimal),
+      //   participants_num: ret['Ok'].participants_num,
+      // }
     }]
   }
 }

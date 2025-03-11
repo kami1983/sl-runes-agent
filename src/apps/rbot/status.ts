@@ -240,7 +240,7 @@ export const getReStatusList = async (pool: Knex.Knex, page_start: number, page_
        'token_id', 
        'is_random', 
        'memo', 
-       'snatch_list', 
+      //  'snatch_list', 
        'friendly_amount'
     ]
     const values = []

@@ -95,10 +95,6 @@ export const slCallback = async (req: Request, res: Response, next: NextFunction
       }
       break;
     case '/sl/grab':
-      // if(_checkAgent()){
-      //   const rid = req.body.rid;
-      //   res.send(await actionSlGrab(uid, username, rid));
-      // }
       if(_checkToken()){
         const rid = req.body.rid;
         res.send([{get: req.query, post: req.body}, await actionSlGrab(tid, uid, username, rid)]);
