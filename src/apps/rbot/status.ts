@@ -51,6 +51,7 @@ export interface ReStatus {
 
 export interface ExpendReStatus extends ReStatus {
   friendly_amount: string|null;
+  snatch_list_count: number;
 }
 
 export interface ReStatusList {
@@ -208,6 +209,7 @@ export const getReStatusList = async (pool: Knex.Knex, page_start: number, page_
       friendly_amount: null,
       expire_at: item.expire_at.toString().substring(0, 10),
       create_time: (new Date(item.create_time??0).getTime()).toString().substring(0, 10),
+      snatch_list_count: item.snatch_list?.length??0,
     };
     if (item_token_id != null) {
       const item_tid = getTidByCanisterId(item_token_id);
@@ -241,6 +243,7 @@ export const getReStatusList = async (pool: Knex.Knex, page_start: number, page_
        'is_random', 
        'memo', 
       //  'snatch_list', 
+      'snatch_list_count',
        'friendly_amount'
     ]
     const values = []
