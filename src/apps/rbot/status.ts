@@ -204,6 +204,18 @@ export const getReStatusList = async (pool: Knex.Knex, page_start: number, page_
   for (let i = 0; i < status_list.length; i++) {
     const item = status_list[i];
     const item_token_id = item.token_id;
+
+    // 整理一下item数据的snatch_list字段，去掉其中的null值
+    if(item.snatch_list == null) {
+      item.snatch_list = []
+    }else if(item.snatch_list.length > 0) {
+      for (let idx=0; idx<item.snatch_list.length; idx++) {
+        if(item.snatch_list[idx] == null) {
+          item.snatch_list.splice(idx, 1)
+        }
+      }
+    }
+
     const result_item: ExpendReStatus = {
       ...item,
       friendly_amount: null,
@@ -211,6 +223,7 @@ export const getReStatusList = async (pool: Knex.Knex, page_start: number, page_
       create_time: (new Date(item.create_time??0).getTime()).toString().substring(0, 10),
       snatch_list_count: item.snatch_list?.length??0,
     };
+    // console.log('DEBUG - item.snatch_list', item.snatch_list?.length, item.snatch_list,)
     if (item_token_id != null) {
       const item_tid = getTidByCanisterId(item_token_id);
       if(item_tid != null) {
