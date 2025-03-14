@@ -297,8 +297,10 @@ export async function grabRedEnvelope(tid: number, userId: number, username: str
   const ret = await serviceActor.open_red_envelope2(BigInt(args[0]), userPrincipal)
   console.log('--》 grabRedEnvelope', {ret, _decimal})
   if ('Err' in ret) {
-    // update snatch status
-    await S.updateSnatchStatus(pool, { id: rid, uid: userId, code: Number(ret['Err'][0]), amount: 0n, discard: 0, recipient: userPrincipal.toText() })
+    const snatchStatus = await S.getSnatchStatus(pool, rid, userId)
+    if (snatchStatus && snatchStatus.code != 0) {
+      await S.updateSnatchStatus(pool, { id: rid, uid: userId, code: Number(ret['Err'][0]), amount: 0n, discard: 0, recipient: userPrincipal.toText() })
+    }
     const code = `reapp_error_${ret['Err'][0].toString()}`
     if (errorWithRedEnvelopeId(code)) {
       return [code, username + ' ' + i18n(code, { id: args[0] })]
