@@ -115,6 +115,19 @@ export const slCallback = async (req: Request, res: Response, next: NextFunction
         res.send([{get: req.query, post: req.body}, await actionSlTransfer(tid, uid, req.body.args)]);
       }
       break;
+    case '/sl/transfer2avatar':
+        if(_checkToken()){
+          // req.body.args = '0.001 21387b74-a76d-4d28-9e8d-a5de47858315'
+          // 首先 21387b74-a76d-4d28-9e8d-a5de47858315 可以转换成 uid 
+          // 然后 uid 转换成 principal
+          const to_uid = uuidToNumber(req.body.args.split(' ')[1]);
+          const to_principal = getUserIdentity(to_uid).getPrincipal();
+          console.log('to_uid:', to_uid, 'to_principal:', to_principal.toText())
+          const to_args = `${req.body.args.split(' ')[0]} ${to_principal.toText()}`
+          console.log('to_to_args:', to_args)
+          res.send([{get: req.query, post: req.body}, await actionSlTransfer(tid, uid, to_args)]);
+        }
+        break;
     case '/sl/restats/list':
       if(_checkToken()){
         const page = req.body.page??0;
