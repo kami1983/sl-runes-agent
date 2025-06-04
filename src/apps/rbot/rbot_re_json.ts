@@ -24,7 +24,7 @@ const RBOT_BOT_USERNAME = process.env.RBOT_BOT_USERNAME || ""
 const TOKEN_SYMBOL = process.env.RBOT_TOKEN_SYMBOL || ""
 const TOKEN_DECIMALS = process.env.RBOT_TOKEN_DECIMALS || "2"
 
-export async function createRedEnvelope(tid: number, userId: number, args: string, i18n: TFunction): Promise<[string, object?, object?]> {
+export async function createRedEnvelope(tid: number, userId: number, ex_day: number, args: string, i18n: TFunction): Promise<[string, object?, object?]> {
 
   console.log('RUN - createRedEnvelope')
   const _token_symbol = getTokenSymbolByTid(tid)
@@ -87,7 +87,7 @@ export async function createRedEnvelope(tid: number, userId: number, args: strin
   const random = (matches[3] === 'F') ? false : true
   const memo = matches[4] || ''
   // default: utc nanoseconds + 24hours
-  const expires_at = BigInt((new Date()).getTime() + ((24 * 7) * 60 * 60 * 1000)) * 1000000n
+  const expires_at = BigInt((new Date()).getTime() + ((24 * ex_day) * 60 * 60 * 1000)) * 1000000n
 
   // TODO: Approve to agent, then transfer_from to re_app + fee_address
   const fee_amount = amount * BigInt(token.fee_ratio) / 100n

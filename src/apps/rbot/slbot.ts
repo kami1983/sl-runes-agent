@@ -91,7 +91,9 @@ export const slCallback = async (req: Request, res: Response, next: NextFunction
       break;
     case '/sl/create':
       if(_checkToken()){
-        res.send([{get: req.query, post: req.body}, await actionSlCreate(tid, uid, req.body.args)]);
+        const ex_day = req.body.ex_day??7; // 默认7天
+        console.log('ex_day:', ex_day, 'args:', req.body.args)
+        res.send([{get: req.query, post: req.body}, await actionSlCreate(tid, uid, ex_day, req.body.args)]);
       }
       break;
     case '/sl/grab':
@@ -270,9 +272,9 @@ async function actionSlWallet(tid: number, uid: number): Promise<ResultWalletInf
   return await showWallet(tid, uid, getI18n())
 }
 
-async function actionSlCreate(tid: number, uid: number, args: string): Promise<[string, object?, object?]>{
+async function actionSlCreate(tid: number, uid: number, ex_day: number, args: string): Promise<[string, object?, object?]>{
   try{
-    return await createRedEnvelope(tid, uid, args, getI18n())
+    return await createRedEnvelope(tid, uid, ex_day, args, getI18n())
   }catch(e){
     console.log('error:', e)
     return [(e as Error).message]
