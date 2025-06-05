@@ -201,7 +201,7 @@ export const slCallback = async (req: Request, res: Response, next: NextFunction
       res.send(jwt.sign({uid: uid}, JWT_SECRET_KEY, {expiresIn: '1h'}));
       break;
     case '/version':
-      res.send({version: '1.0.0'});
+      res.send({version: '1.1.0'});
       break;
     case '/sl/gettoken':
       // if(APP_MODE == 'test' || APP_MODE == 'dev'){
