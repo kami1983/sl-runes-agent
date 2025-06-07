@@ -590,6 +590,8 @@ CREATE TABLE users (
 export interface User {
   uid: number;
   username?: string;
+  uuid?: string;
+  principal?: string;
   update_time?: Date;
 }
 
@@ -599,6 +601,31 @@ export const insertUser = async (pool: Knex.Knex, user: User) => {
     .onConflict(['uid'])
     .merge({
       username: user.username,
+      uuid: user.uuid,
+      principal: user.principal,
       update_time: pool.fn.now(),
     });
 }
+
+export const getUserByUuid = async (pool: Knex.Knex, uuid: string): Promise<User | undefined> => {
+  return await pool('users')
+    .where('uuid', uuid)
+    .first() as User | undefined;
+}
+
+export const getUserByUid = async (pool: Knex.Knex, uid: number): Promise<User | undefined> => {
+  return await pool('users')
+    .where('uid', uid)
+    .first() as User | undefined;
+}
+
+export const getUuidByPrincipal = async (pool: Knex.Knex, principalList: string[]): Promise<string[]> => {
+  const users = await pool('users')
+    .whereIn('principal', principalList)
+    .select('uuid', 'principal');
+  
+  // 保持返回顺序与输入顺序一致
+  const uuidMap = new Map(users.map(u => [u.principal, u.uuid]));
+  return principalList.map(p => uuidMap.get(p) || '');
+}
+

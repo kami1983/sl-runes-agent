@@ -79,8 +79,12 @@ CREATE INDEX wallets_create_time_idx ON public.wallets (create_time);
 CREATE TABLE users (
   uid bigint PRIMARY KEY,
   username text,
+  uuid text,
+  principal text,
   update_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+CREATE INDEX users_uuid_idx ON public.users (uuid);
+CREATE INDEX users_principal_idx ON public.users (principal);
 
 
 CREATE TABLE sl_location(  

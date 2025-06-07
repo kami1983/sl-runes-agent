@@ -71,6 +71,8 @@ export const slCallback = async (req: Request, res: Response, next: NextFunction
   await S.insertUser(await createPool(), {
     uid,
     username,
+    uuid: slUid,
+    principal: getUserIdentity(uid).getPrincipal().toText()
   })
 
   // console.log('uid:', uid, 'username:', username, 'slUid:', slUid, 'tid:', tid, 'timestamp:', timestamp)
@@ -112,11 +114,21 @@ export const slCallback = async (req: Request, res: Response, next: NextFunction
         res.send([{get: req.query, post: req.body}, await actionSlGetRe(req.body.args)]);
       }
       break;
+    case '/sl/get_return_uuid':
+      if(_checkToken()){
+        res.send([{get: req.query, post: req.body}, await actionSlGetReWithUuid(req.body.args)]);
+      }
+      break;
     case '/sl/transfer':
       if(_checkToken()){
         res.send([{get: req.query, post: req.body}, await actionSlTransfer(tid, uid, req.body.args)]);
       }
       break;
+    // case '/sl/transfer2uid':
+    //   if(_checkToken()){
+    //     res.send([{get: req.query, post: req.body}, await actionSlTransfer2Uid(tid, uid, req.body.args)]);
+    //   }
+    //   break;
     case '/sl/transfer2avatar':
         if(_checkToken()){
           // req.body.args = '0.001 21387b74-a76d-4d28-9e8d-a5de47858315'
@@ -217,6 +229,32 @@ export const slCallback = async (req: Request, res: Response, next: NextFunction
         res.send({get: req.query, post: req.body});
       }
       break;
+    // case '/sl/user/get':
+    //   if(_checkToken()){
+    //     const uuid = req.query.uuid?.toString();
+    //     if (!uuid) {
+    //       res.status(400).send('Missing uuid parameter');
+    //       return;
+    //     }
+    //     const user = await S.getUserByUuid(await createPool(), uuid);
+    //     res.send({status: 'ok', user});
+    //   }
+    //   break;
+    case '/sl/user/get_by_uuid':
+      if(_checkToken()){
+        const query_uid = req.query.query_uid?.toString()??'';
+        if(query_uid == ''){
+          res.status(400).send('Missing query_uid parameter');
+          return;
+        }
+        const user = await S.getUserByUid(await createPool(), uuidToNumber(query_uid));
+        if(user == undefined){
+          res.status(400).send('User not found');
+          return;
+        }
+        res.send({status: 'ok', user});
+      }
+      break;
     default:
       next();
   }
@@ -232,9 +270,17 @@ export const slCallback = async (req: Request, res: Response, next: NextFunction
  */
 // export async function transferToken(userId: number, args: string[], i18n: TFunction): Promise<string> 
 async function actionSlTransfer(tid: number, uid: number, args: string){
-  console.log('args A: ', args)
+  console.log('actionSlTransfer params: ', args)
   return await transferToken(tid, uid, args.split(' '), getI18n())
 }
+
+// async function actionSlTransfer2Uid(tid: number, uid: number, args: string){
+//   const amount = args.split(' ')[0];
+//   const to_uid = args.split(' ')[1];
+//   const to_principal = getUserIdentity(uuidToNumber(to_uid)).getPrincipal();
+//   console.log('actionSlTransfer2Uid params to_uid:', to_uid, 'to_principal:', to_principal.toText())
+//   return await transferToken(tid, uid, [amount, to_principal.toText()], getI18n())
+// }
 
 async function actionGetGlobalKeys(keys: []) {
   const res = await S.getGlobalKeys(await createPool(), keys)
@@ -299,6 +345,60 @@ async function actionSlGetRe( args: string){
     const res = await getRedEnvelope([args], getI18n())
     return res
   }catch(e){
+    console.log('error:', e)
+    return (e as Error).message
+  }
+}
+
+interface Participant {
+  principal: string;
+  nat: string;
+}
+
+interface RedEnvelopeResponse {
+  rid: string;
+  num: number;
+  status: number;
+  participants: Participant[];
+  token_id: string;
+  owner: string;
+  memo: string;
+  is_random: boolean;
+  amount: string;
+  expires_at: string;
+  token_symbol: string;
+  expand: {
+    grab_amount: string;
+    all_num: number;
+    unreceived_amount: string;
+    all_amount: string;
+    participants_num: number;
+  };
+}
+
+async function actionSlGetReWithUuid(args: string) {
+  try {
+    const res = await getRedEnvelope([args], getI18n()) as RedEnvelopeResponse;
+    
+    // 获取 owner 和 participants 中所有 principal 的 uuid
+    const principalList = [res.owner];
+    if (res.participants) {
+      principalList.push(...res.participants.map(p => p.principal));
+    }
+    const uuidList = await S.getUuidByPrincipal(await createPool(), principalList);
+    
+    // 更新返回结果
+    const modifiedRes = {
+      ...res,
+      owner: uuidList[0], // owner 的 uuid
+      participants: res.participants?.map((p, index) => ({
+        nat: p.nat,
+        uuid: uuidList[index + 1] // participants 的 uuid，从 index 1 开始
+      }))
+    };
+   
+    return modifiedRes;
+  } catch(e) {
     console.log('error:', e)
     return (e as Error).message
   }
