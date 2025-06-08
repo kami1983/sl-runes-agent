@@ -3,6 +3,7 @@
 import { TFunction } from "i18next"
 import { Principal } from '@dfinity/principal'
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 
 // import { getUserIdentity } from '../../identity'
 import { createPool } from '../../tokens'
@@ -36,6 +37,44 @@ const RE_SNATCH_PICTURE = 'https://storage.googleapis.com/socialfi-agent/rebot/s
 const JWT_SECRET_KEY = process.env.JWT_SECRET_KEY || ''
 const APP_MODE = process.env.APP_MODE || 'prod'
 
+// AES 加密密钥，使用环境变量或默认值
+const AES_KEY = process.env.AES_KEY || ''; // 32 bytes
+const AES_IV = process.env.AES_IV || ''; // 16 bytes
+
+function aesEncrypt(text: string): string {
+  try {
+    console.log('AES_KEY length:', Buffer.from(AES_KEY).length);
+    console.log('AES_IV length:', Buffer.from(AES_IV).length);
+    
+    // 确保密钥长度正确
+    const key = Buffer.from(AES_KEY).slice(0, 32);
+    const iv = Buffer.from(AES_IV).slice(0, 16);
+    
+    const cipher = crypto.createCipheriv('aes-256-cbc', key, iv);
+    let encrypted = cipher.update(text, 'utf8', 'base64');
+    encrypted += cipher.final('base64');
+    return encrypted;
+  } catch (error: any) {
+    console.error('Encryption error:', error);
+    throw new Error(`加密失败: ${error.message}`);
+  }
+}
+
+function aesDecrypt(encrypted: string): string {
+  try {
+    // 确保密钥长度正确
+    const key = Buffer.from(AES_KEY).slice(0, 32);
+    const iv = Buffer.from(AES_IV).slice(0, 16);
+    
+    const decipher = crypto.createDecipheriv('aes-256-cbc', key, iv);
+    let decrypted = decipher.update(encrypted, 'base64', 'utf8');
+    decrypted += decipher.final('utf8');
+    return decrypted;
+  } catch (error: any) {
+    console.error('Decryption error:', error);
+    throw new Error(`解密失败: ${error.message}`);
+  }
+}
 
 const i18nTF = i18next.getFixedT('en')
 function getI18n(): TFunction {
@@ -213,7 +252,7 @@ export const slCallback = async (req: Request, res: Response, next: NextFunction
       res.send(jwt.sign({uid: uid}, JWT_SECRET_KEY, {expiresIn: '1h'}));
       break;
     case '/version':
-      res.send({version: '1.1.0'});
+      res.send({version: '1.2.0'});
       break;
     case '/sl/gettoken':
       // if(APP_MODE == 'test' || APP_MODE == 'dev'){
@@ -253,6 +292,37 @@ export const slCallback = async (req: Request, res: Response, next: NextFunction
           return;
         }
         res.send({status: 'ok', user});
+      }
+      break;
+    case '/sl/encrypt':
+      if(_checkToken()){
+        const text = req.body.text?.toString();
+        if (!text) {
+          res.status(400).send('Missing text parameter');
+          return;
+        }
+        try {
+          const encrypted = aesEncrypt(text);
+          res.send({status: 'ok', encrypted});
+        } catch (error: any) {
+          console.error('Encryption API error:', error);
+          res.status(500).send(error.message || 'Encryption failed');
+        }
+      }
+      break;
+    case '/sl/decrypt':
+      if(_checkToken()){
+        const encrypted = req.body.encrypted?.toString();
+        if (!encrypted) {
+          res.status(400).send('Missing encrypted parameter');
+          return;
+        }
+        try {
+          const decrypted = aesDecrypt(encrypted);
+          res.send({status: 'ok', decrypted});
+        } catch (error) {
+          res.status(500).send('Decryption failed');
+        }
       }
       break;
     default:
