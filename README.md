@@ -115,7 +115,7 @@ https://a4gq6-oaaaa-aaaab-qaa4q-cai.raw.icp0.io/?id=pqtoi-6iaaa-aaaal-ad7rq-cai
 ```
 涉及memo修改的字段：
 
-/sl/create
+/sl/create [OK]
 /sl/restats/list 
 /sl/restats/buy/list
 

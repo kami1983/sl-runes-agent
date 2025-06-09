@@ -3,7 +3,7 @@
 import { TFunction } from "i18next"
 import { Principal } from '@dfinity/principal'
 import jwt from 'jsonwebtoken';
-import crypto from 'crypto';
+import express, { Request, Response, NextFunction } from 'express';
 
 // import { getUserIdentity } from '../../identity'
 import { createPool } from '../../tokens'
@@ -11,8 +11,6 @@ import { createPool } from '../../tokens'
 // import { showWallet, transferToken } from './rbot_wallet'
 // import { createRedEnvelope, sendRedEnvelope, grabRedEnvelope, revokeRedEnvelope, listRedEnvelope, showRedEnvelope, isRedEnvelopeEmpty, errorWithRedEnvelopeId } from './rbot_re'
 import i18next, { I18nContext, getLanguage, setLanguage } from "./i18n"
-import express, { Request, Response, NextFunction } from 'express';
-
 import { ResultWalletInfos, showWallet, transferToken } from './rbot_wallet_json';
 import { createRedEnvelope, getRedEnvelope, grabRedEnvelope, isAgentAcc, listRedEnvelope, revokeRedEnvelope } from "./rbot_re_json";
 import { getAgentIdentity, getUserIdentity, delegateIdentity, uuidToNumber } from '../../identity'
@@ -22,6 +20,8 @@ import { llMD5String } from '../../utils'
 import Knex from 'knex';
 
 import * as S from "./status"
+
+import { aesEncrypt, aesDecrypt } from '../../utils/crypto';
 
 if (process.env.NODE_ENV !== 'production') {
   require('dotenv').config();
@@ -36,45 +36,6 @@ const RE_START_PICTURE = 'https://storage.googleapis.com/socialfi-agent/rebot/sn
 const RE_SNATCH_PICTURE = 'https://storage.googleapis.com/socialfi-agent/rebot/snatch.jpg'
 const JWT_SECRET_KEY = process.env.JWT_SECRET_KEY || ''
 const APP_MODE = process.env.APP_MODE || 'prod'
-
-// AES 加密密钥，使用环境变量或默认值
-const AES_KEY = process.env.AES_KEY || ''; // 32 bytes
-const AES_IV = process.env.AES_IV || ''; // 16 bytes
-
-function aesEncrypt(text: string): string {
-  try {
-    console.log('AES_KEY length:', Buffer.from(AES_KEY).length);
-    console.log('AES_IV length:', Buffer.from(AES_IV).length);
-    
-    // 确保密钥长度正确
-    const key = Buffer.from(AES_KEY).slice(0, 32);
-    const iv = Buffer.from(AES_IV).slice(0, 16);
-    
-    const cipher = crypto.createCipheriv('aes-256-cbc', key, iv);
-    let encrypted = cipher.update(text, 'utf8', 'base64');
-    encrypted += cipher.final('base64');
-    return encrypted;
-  } catch (error: any) {
-    console.error('Encryption error:', error);
-    throw new Error(`加密失败: ${error.message}`);
-  }
-}
-
-function aesDecrypt(encrypted: string): string {
-  try {
-    // 确保密钥长度正确
-    const key = Buffer.from(AES_KEY).slice(0, 32);
-    const iv = Buffer.from(AES_IV).slice(0, 16);
-    
-    const decipher = crypto.createDecipheriv('aes-256-cbc', key, iv);
-    let decrypted = decipher.update(encrypted, 'base64', 'utf8');
-    decrypted += decipher.final('utf8');
-    return decrypted;
-  } catch (error: any) {
-    console.error('Decryption error:', error);
-    throw new Error(`解密失败: ${error.message}`);
-  }
-}
 
 const i18nTF = i18next.getFixedT('en')
 function getI18n(): TFunction {

@@ -5,6 +5,7 @@ import { table, getBorderCharacters } from "table"
 import { TFunction } from "i18next"
 import { join } from "path"
 import sharp from 'sharp'
+import { aesEncrypt, aesDecrypt } from '../../utils/crypto'
 
 import { getTidByCanisterId, getTokenDecimalByTid, getTokenSymbolByTid, makeAgent } from '../../utils'
 import { getAgentIdentity, getUserIdentity } from '../../identity'
@@ -89,6 +90,9 @@ export async function createRedEnvelope(tid: number, userId: number, ex_day: num
   // default: utc nanoseconds + 24hours
   const expires_at = BigInt((new Date()).getTime() + ((24 * ex_day) * 60 * 60 * 1000)) * 1000000n
 
+  // 加密 memo
+  const encrypted_memo = memo ? aesEncrypt(memo) : '';
+
   // TODO: Approve to agent, then transfer_from to re_app + fee_address
   const fee_amount = amount * BigInt(token.fee_ratio) / 100n
   const balance = await icrc1BalanceOf(token, userId)
@@ -117,7 +121,7 @@ export async function createRedEnvelope(tid: number, userId: number, ex_day: num
     participants: [],
     token_id: Principal.fromText(token.canister),
     owner: getUserIdentity(userId).getPrincipal(),
-    memo: memo,
+    memo: encrypted_memo,
     is_random: random,
     amount: amount,
     expires_at: [expires_at]
@@ -217,7 +221,7 @@ export async function sendRedEnvelope(userId: number, args: string[], i18n: TFun
   }
 }
 
-export async function getRedEnvelope( args: string[], i18n: TFunction): Promise<object> {
+export async function getRedEnvelope(args: string[], i18n: TFunction): Promise<object> {
   if (args.length !== 1) {
     return [i18n('msg_how_to_send')]
   }
@@ -248,6 +252,17 @@ export async function getRedEnvelope( args: string[], i18n: TFunction): Promise<
 
   console.log('Debug base_ret', {base_ret, expand_ret, _decimal})
 
+  // 解密 memo，如果解密失败则使用原文
+  let memo = base_ret.memo || '';
+  if (memo) {
+    try {
+      memo = aesDecrypt(memo);
+    } catch (error) {
+      console.log('Memo decryption failed, using original text:', error);
+      // 使用原文，不做任何处理
+    }
+  }
+
   return {
     rid: args[0],
     ...base_ret,
@@ -262,7 +277,8 @@ export async function getRedEnvelope( args: string[], i18n: TFunction): Promise<
     token_id: base_ret.token_id.toText(),
     token_symbol: getTokenSymbolByTid(getTidByCanisterId(base_ret.token_id.toText())??tid),
     owner: base_ret.owner.toText(),
-    expires_at: base_ret.expires_at.toString().substring(0, 10) ,
+    expires_at: base_ret.expires_at.toString().substring(0, 10),
+    memo: memo,
     expand: {
       grab_amount: bigintToString(expand_ret.grab_amount, _decimal),
       all_num: expand_ret.all_num,
@@ -468,13 +484,24 @@ export async function listRedEnvelope(userId: number, args: string[], i18n: TFun
 }
 
 export async function showRedEnvelope(userName: string, args: string[], i18n: TFunction): Promise<[string, string?, object?]> {
-  // const userIdentity = getUserIdentity(userId)
   const serviceActor = await getAgentActor()
   const ret = await serviceActor.get_red_envelope(BigInt(args[0]))
   if (ret.length) {
     const cover = await RBOT_REDENVELOPE_COVER(args[0], ret[0].amount, ret[0].num)
     let htmlString = '🧧🧧🧧 ' + i18n('from') + ' <b>' + userName + '</b>' + '\n'
-    htmlString += ret[0].memo
+    
+    // 解密 memo，如果解密失败则使用原文
+    let memo = ret[0].memo || '';
+    if (memo) {
+      try {
+        memo = aesDecrypt(memo);
+      } catch (error) {
+        console.log('Memo decryption failed, using original text:', error);
+        // 使用原文，不做任何处理
+      }
+    }
+    htmlString += memo;
+    
     const markup = { reply_markup: RBOT_REDENVELOPE_KEYBOARD(i18n, BigInt(args[0])) }
     return [htmlString, cover, markup]
   } else {
