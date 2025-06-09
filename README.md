@@ -110,20 +110,3 @@ https://a4gq6-oaaaa-aaaab-qaa4q-cai.raw.icp0.io/?id=pqtoi-6iaaa-aaaal-ad7rq-cai
 
 
 ```
-
-### Require doc
-```
-涉及memo修改的字段：
-
-/sl/create [OK]
-/sl/restats/list 
-/sl/restats/buy/list
-
-其中如果解密失败，直接返回原文即可
-
-904和902，从列表接口读取到的数据显示还没有被领空，但去revoke的时候，却提示已经empty了，怀疑是索引库和链上数据不一致了。
-```
-
-###
-
- https://ic.house/address/xevnm-gaaaa-aaaar-qafnq-cai/pqtoi-6iaaa-aaaal-ad7rq-cai

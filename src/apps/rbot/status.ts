@@ -4,6 +4,7 @@ import { getTidByCanisterId, getTokenDecimalByTid, getTokenSymbolByTid, getToken
 import { bigintToString } from './rbot_utils';
 import { stat } from 'fs';
 import { Principal } from '@dfinity/principal';
+import { aesDecrypt } from '../../utils/crypto';
 
 /*
 CREATE TABLE re_status(
@@ -113,7 +114,6 @@ export const getReStatusListByRecipient = async (pool: Knex.Knex, page_start: nu
   // TODO::// 同样联合查询 snatch_status, re_status 表 检索 re_status，snatch_status.recipient=recipient
   // snatch_status.id = re_status.id 
 
-  console.log('getReStatusListByRecipient params: ', {page_start, page_size, tid, recipient})
   // 联合查询 snatch_status 和 re_status，拼接到一起
   let query = pool('snatch_status as s')
     .leftJoin('re_status as r', function () {
@@ -133,11 +133,24 @@ export const getReStatusListByRecipient = async (pool: Knex.Knex, page_start: nu
     for (let i = 0; i < status_list.length; i++) {
       const item = status_list[i];
       const item_token_id = item.token_id;
+
+      // 尝试解密 memo，如果解密失败则使用原文
+      let decrypted_memo = item.memo || '';
+      if (decrypted_memo) {
+        try {
+          decrypted_memo = aesDecrypt(decrypted_memo);
+        } catch (error) {
+          console.log('Memo decryption failed for id:', item.id, 'using original text:');
+          // 使用原文，不做任何处理
+        }
+      }
+
       const result_item = {
         ...item,
         friendly_amount: null,
         // expire_at: item.expire_at.toString().substring(0, 10),
         create_time: (new Date(item.snatch_create_time??0).getTime()).toString().substring(0, 10),
+        memo: decrypted_memo, // 使用解密后的 memo
       };
       if (item_token_id != null) {
         const item_tid = getTidByCanisterId(item_token_id);
@@ -165,7 +178,6 @@ export const getReStatusListByRecipient = async (pool: Knex.Knex, page_start: nu
       }
       values.push(value)
     }
-
 
     return [keys, values] as [string[], any[]];
 }
@@ -216,12 +228,24 @@ export const getReStatusList = async (pool: Knex.Knex, page_start: number, page_
       }
     }
 
+    // 尝试解密 memo，如果解密失败则使用原文
+    let decrypted_memo = item.memo || '';
+    if (decrypted_memo) {
+      try {
+        decrypted_memo = aesDecrypt(decrypted_memo);
+      } catch (error) {
+        console.log('Memo decryption failed for id:', item.id, 'using original text:', error);
+        // 使用原文，不做任何处理
+      }
+    }
+
     const result_item: ExpendReStatus = {
       ...item,
       friendly_amount: null,
       expire_at: item.expire_at.toString().substring(0, 10),
       create_time: (new Date(item.create_time??0).getTime()).toString().substring(0, 10),
       snatch_list_count: item.snatch_list?.length??0,
+      memo: decrypted_memo, // 使用解密后的 memo
     };
     // console.log('DEBUG - item.snatch_list', item.snatch_list?.length, item.snatch_list,)
     if (item_token_id != null) {
