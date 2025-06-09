@@ -252,7 +252,7 @@ export const slCallback = async (req: Request, res: Response, next: NextFunction
       res.send(jwt.sign({uid: uid}, JWT_SECRET_KEY, {expiresIn: '1h'}));
       break;
     case '/version':
-      res.send({version: '1.2.0'});
+      res.send({version: '1.3.0'});
       break;
     case '/sl/gettoken':
       // if(APP_MODE == 'test' || APP_MODE == 'dev'){
@@ -292,6 +292,29 @@ export const slCallback = async (req: Request, res: Response, next: NextFunction
           return;
         }
         res.send({status: 'ok', user});
+      }
+      break;
+    case '/sl/user/list':
+      if(_checkToken()){
+        try {
+          const [users, total] = await Promise.all([
+            S.getAllUsers(await createPool()),
+            S.getUserCount(await createPool())
+          ]);
+          res.send({
+            status: 'ok', 
+            total,
+            data: users.map(user => ({
+              uid: user.uid,
+              username: user.username || '',
+              update_time: user.update_time,
+              principal: user.principal || getUserIdentity(user.uid).getPrincipal().toText()
+            }))
+          });
+        } catch (error: any) {
+          console.error('Get users error:', error);
+          res.status(500).send(error.message || 'Failed to get users');
+        }
       }
       break;
     case '/sl/encrypt':

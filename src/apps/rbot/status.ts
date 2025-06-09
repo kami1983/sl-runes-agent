@@ -613,6 +613,12 @@ export const getUserByUuid = async (pool: Knex.Knex, uuid: string): Promise<User
     .first() as User | undefined;
 }
 
+export const getAllUsers = async (pool: Knex.Knex): Promise<User[]> => {
+  return await pool('users')
+    .select('uid', 'username', 'update_time', 'principal')
+    .orderBy('update_time', 'desc') as User[];
+}
+
 export const getUserByUid = async (pool: Knex.Knex, uid: number): Promise<User | undefined> => {
   return await pool('users')
     .where('uid', uid)
@@ -627,5 +633,10 @@ export const getUuidByPrincipal = async (pool: Knex.Knex, principalList: string[
   // 保持返回顺序与输入顺序一致
   const uuidMap = new Map(users.map(u => [u.principal, u.uuid]));
   return principalList.map(p => uuidMap.get(p) || '');
+}
+
+export const getUserCount = async (pool: Knex.Knex): Promise<number> => {
+  const result = await pool('users').count('uid as count').first();
+  return result?.count as number || 0;
 }
 
