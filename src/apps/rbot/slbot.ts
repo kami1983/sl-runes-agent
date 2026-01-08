@@ -143,7 +143,7 @@ export const slCallback = async (req: Request, res: Response, next: NextFunction
         }
         break;
     case '/sl/restats/list':
-      if(_checkToken()){
+      // if(_checkToken()){
         const page = req.body.page??0;
         const size = req.body.size??10;
 
@@ -156,7 +156,7 @@ export const slCallback = async (req: Request, res: Response, next: NextFunction
           owner = null;
         }
         res.send([{get: req.query, post: req.body}, await actionGetStatsList(tid, page, size, owner)]);
-      }
+      // }
       break;
     case '/sl/restats/buy/list':
       if(_checkToken()){
