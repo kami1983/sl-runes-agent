@@ -44,6 +44,20 @@ function getI18n(): TFunction {
 
 export const slCallback = async (req: Request, res: Response, next: NextFunction) => {
 
+  const requestOrigin = req.get('Origin');
+  if (requestOrigin) {
+    res.set('Access-Control-Allow-Origin', requestOrigin);
+    res.set('Vary', 'Origin');
+  } else {
+    res.set('Access-Control-Allow-Origin', '*');
+  }
+  res.set('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
+  res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+  if (req.method === 'OPTIONS') {
+    res.status(204).send('');
+    return;
+  }
+
   console.log(req.path)
 
   // if(!checkToken(req)) {
